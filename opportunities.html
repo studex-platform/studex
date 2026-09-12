@@ -391,20 +391,43 @@
     document.getElementById('student-teams-cards').innerHTML = studentTeamCategories.map(masterCardMarkup).join('');
   }
 
-  // Background fetch for counters without blocking page render
+  // Background fetch for counters without blocking page render.
+  //
+  // سبب البطء السابق: هذه الدالة كانت تستدعي StudexStore.getItems(key)
+  // بشكل منفصل لكل بطاقة (6 مفاتيح هنا: tech_courses, scholarships,
+  // internships, student_teams_list, conferences, workshops) — أي 6
+  // استعلامات Firestore مستقلة ومتزامنة عند كل تحميل صفحة (خصوصاً أول
+  // زيارة قبل تكوّن الكاش المحلي)، مقابل 3 فقط في academic-resources.html.
+  // نفس النمط البرمجي بالضبط في الملفين، لكن ضعف عدد الرحلات للشبكة هو ما
+  // كان يُحس كبطء في هذه الصفحة تحديداً.
+  //
+  // الحل: تجميع كل المفاتيح في استدعاء دفعي واحد (getItemsBatch) يستخدم
+  // استعلام Firestore واحد فقط (where cardKey 'in' [...]) بدل 6 استعلامات.
   function refreshCounts() {
     if (typeof StudexStore === 'undefined') {
       console.error('[StudeX] StudexStore غير معرّف — لن تُعرض العدادات. تأكد أن studex-store.js تم تحميله بنجاح (تبويب Network) وأن اسم الملف مطابق تماماً لحالة الأحرف على GitHub Pages.');
       return;
     }
-    [...courseCategories, ...opportunityCategories, ...studentTeamCategories]
+    const keys = [...courseCategories, ...opportunityCategories, ...studentTeamCategories]
       .filter(cat => cat.type !== 'expand')
-      .forEach(cat => {
-        StudexStore.getItems(cat.key).then(items => {
-          const el = document.getElementById(`count-${cat.key}`);
+      .map(cat => cat.key);
+
+    if (typeof StudexStore.getItemsBatch === 'function') {
+      StudexStore.getItemsBatch(keys).then(resultMap => {
+        keys.forEach(key => {
+          const el = document.getElementById(`count-${key}`);
+          if (el) el.textContent = `${(resultMap[key] || []).length} عنصر`;
+        });
+      }).catch(() => {});
+    } else {
+      // تراجع آمن (fallback) لو studex-store.js قديم ولا يحتوي getItemsBatch بعد
+      keys.forEach(key => {
+        StudexStore.getItems(key).then(items => {
+          const el = document.getElementById(`count-${key}`);
           if (el) el.textContent = `${items.length} عنصر`;
         }).catch(() => {});
       });
+    }
   }
 
   /* =====================================================================
@@ -418,7 +441,17 @@
     list.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">جارِ التحميل...</p>`;
     document.getElementById('items-modal-backdrop').classList.add('show');
 
-    const items = await StudexStore.getItems(cardKey);
+    if (typeof StudexStore === 'undefined') {
+      list.innerHTML = `<p class="text-sm text-red-500 text-center py-6">تعذّر تحميل مخزن البيانات. حدّث الصفحة، وإن استمرت المشكلة تحقّق من تبويب Network في أدوات المطوّر.</p>`;
+      return;
+    }
+
+    let items = [];
+    try {
+      items = await StudexStore.getItems(cardKey);
+    } catch (e) {
+      console.error('[StudeX] خطأ أثناء جلب العناصر:', e);
+    }
     list.innerHTML = items.length ? items.map(item => `
       <button onclick="openDetailModal('${cardKey}','${item.id}')" class="text-right bg-surface border border-slate-200 hover:border-accent rounded-xl p-4 transition-colors">
         <h4 class="font-display font-bold text-sm text-navy mb-1">${escapeHTML(item.title)}</h4>
@@ -439,7 +472,13 @@
      optional-video pattern).
   ===================================================================== */
   async function openDetailModal(cardKey, id) {
-    const item = await StudexStore.getItem(cardKey, id);
+    if (typeof StudexStore === 'undefined') return;
+    let item = null;
+    try {
+      item = await StudexStore.getItem(cardKey, id);
+    } catch (e) {
+      console.error('[StudeX] خطأ أثناء جلب تفاصيل العنصر:', e);
+    }
     if (!item) return;
     document.getElementById('detail-modal-title').textContent = item.title;
     document.getElementById('detail-modal-paragraph').innerHTML = linkifyHTML(item.desc || '');

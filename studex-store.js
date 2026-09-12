@@ -150,6 +150,53 @@
     } catch (e) {}
   }
 
+  // جلب دفعي (batch) لعدة مفاتيح بطاقات دفعة واحدة عبر استعلام Firestore
+  // واحد فقط (where cardKey 'in' [...]) بدل استعلام منفصل لكل مفتاح.
+  // يفيد الصفحات التي تحتوي عدداً كبيراً من البطاقات (مثل opportunities.html
+  // بستة مفاتيح) بحيث تنخفض عدد رحلات الشبكة من N إلى رحلة واحدة، بدلاً من
+  // مضاعفة عدد الاستعلامات المتزامنة عند كل تحميل صفحة.
+  // يرجع كائن { cardKey: items[] } يغطي كل المفاتيح المطلوبة.
+  async function getItemsBatch(cardKeys) {
+    const result = {};
+    const missing = [];
+
+    cardKeys.forEach((key) => {
+      if (memoryCache[key] && memoryCache[key].length > 0) {
+        result[key] = memoryCache[key];
+        // تحديث هادئ بالخلفية، بنفس فلسفة getItems()
+        fetchBackground(key);
+      } else {
+        missing.push(key);
+      }
+    });
+
+    if (!missing.length) return result;
+
+    try {
+      const db = getDb();
+      // حد Firestore لعامل 'in' هو 30 قيمة، وهذا يكفي بمراحل لأي عدد
+      // بطاقات حالي أو متوقع بالموقع.
+      const snap = await db.collection(COLLECTION_NAME).where('cardKey', 'in', missing).get();
+      const grouped = {};
+      missing.forEach((key) => { grouped[key] = []; });
+      snap.docs.forEach((d) => {
+        const data = d.data();
+        const key = data.cardKey;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({ id: d.id, ...data });
+      });
+      missing.forEach((key) => {
+        const sorted = sortByCreatedAt(grouped[key] || []);
+        saveToLocal(key, sorted);
+        result[key] = sorted;
+      });
+    } catch (e) {
+      missing.forEach((key) => { result[key] = memoryCache[key] || []; });
+    }
+
+    return result;
+  }
+
   async function getItem(cardKey, id) {
     if (memoryCache[cardKey]) {
       const found = memoryCache[cardKey].find(item => item.id === id);
@@ -306,6 +353,7 @@
     SECTIONS,
     normalizeItem,
     getItems,
+    getItemsBatch,
     getItem,
     addItem,
     updateItem,
