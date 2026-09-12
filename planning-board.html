@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة التخطيط التفاعلية | StudeX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: { DEFAULT: '#0F172A', soft: '#1E293B' },
+          accent: { DEFAULT: '#3B82F6', light: '#60A5FA', dim: '#2563EB' },
+          surface: '#F8FAFC',
+        },
+        fontFamily: {
+          display: ['Cairo', 'sans-serif'],
+          body: ['Tajawal', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Tajawal', sans-serif; background: #F8FAFC; }
+  h1, h2, h3, h4, .font-display { font-family: 'Cairo', sans-serif; }
+
+  .grain-noise {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .tool-tab { transition: all 0.25s ease; }
+  .tool-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
+  .tool-tab:not(.active) { color: #64748B; }
+
+  select { -webkit-appearance: none; appearance: none; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 8px; height: 8px;
+    border-left: 1.6px solid #94A3B8;
+    border-bottom: 1.6px solid #94A3B8;
+    transform: translateY(-65%) rotate(-45deg);
+    pointer-events: none;
+  }
+
+  ::selection { background: #3B82F6; color: white; }
+
+  /* Kanban columns */
+  .board-col { min-height: 140px; transition: background-color 0.2s ease, border-color 0.2s ease; }
+  .board-col.drag-over { background-color: rgba(59,130,246,0.06); border-color: #3B82F6 !important; }
+
+  .task-card { animation: cardIn 0.3s ease; cursor: grab; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .task-card:active { cursor: grabbing; }
+  .task-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -8px rgba(15,23,42,0.14); }
+  .task-card.dragging { opacity: 0.4; }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .priority-chip { transition: all 0.2s ease; }
+
+  #modal-backdrop, #node-modal-backdrop {
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  #modal-backdrop.show, #node-modal-backdrop.show { opacity: 1; pointer-events: auto; }
+  #modal-panel, #node-modal-panel {
+    transform: translateY(16px) scale(0.98); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #modal-backdrop.show #modal-panel, #node-modal-backdrop.show #node-modal-panel {
+    transform: translateY(0) scale(1); opacity: 1;
+  }
+
+  .priority-picker-option.selected, .color-swatch.selected { box-shadow: 0 0 0 2px #0F172A inset; }
+
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ============ Visual Canvas ============ */
+  .canvas-scroll {
+    overflow: auto;
+    position: relative;
+    background-color: #F8FAFC;
+  }
+  .canvas-inner {
+    position: relative;
+    width: 1800px;
+    height: 950px;
+    background-image: radial-gradient(circle, #CBD5E1 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .canvas-bg-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  .canvas-bg-layer img { width: 100%; height: 100%; object-fit: contain; }
+  .canvas-bg-layer iframe { width: 100%; height: 100%; border: none; pointer-events: auto; }
+
+  .canvas-svg { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
+  .connection-line { pointer-events: stroke; cursor: pointer; }
+  .connection-hitbox { pointer-events: stroke; cursor: pointer; }
+
+  .canvas-node {
+    position: absolute;
+    z-index: 20;
+    width: 168px;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: box-shadow 0.15s ease;
+  }
+  .canvas-node:active { cursor: grabbing; }
+  .canvas-node.connecting-source {
+    box-shadow: 0 0 0 3px #3B82F6, 0 8px 20px -6px rgba(59,130,246,0.5);
+  }
+  .canvas-node.connect-target-hover {
+    box-shadow: 0 0 0 3px #10B981;
+  }
+
+  .canvas-toolbar-btn { transition: all 0.2s ease; }
+  .canvas-toolbar-btn.active { background: #3B82F6; color: white; border-color: #3B82F6; }
+
+  input[type="range"] { accent-color: #3B82F6; }
+
+  .file-upload-btn { position: relative; overflow: hidden; }
+  .file-upload-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+</style>
+</head>
+<body class="text-navy antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<header class="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 h-auto py-3 sm:h-[72px] sm:py-0">
+
+      <a href="index.html" class="flex items-center shrink-0">
+        <span class="font-display font-extrabold text-2xl tracking-tight">
+          <span class="text-navy">Stude</span><span class="text-red-600">X</span>
+        </span>
+      </a>
+
+      <div class="flex items-center gap-2 bg-surface border border-slate-200 rounded-2xl p-1.5 shadow-sm order-3 sm:order-none w-full sm:w-fit">
+        <a href="gpa-calculator.html" class="tool-tab font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+          حاسبة المعدل
+        </a>
+        <a href="planning-board.html" class="tool-tab active font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+          لوحة التخطيط
+        </a>
+      </div>
+
+      <a href="index.html" class="flex items-center gap-2 font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors shrink-0">
+        <span>عودة للرئيسية</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 12H7M7 12L11 16M7 12L11 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ BREADCRUMB + TITLE ============ -->
+<section class="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-6">
+  <div class="flex items-center gap-2 text-xs text-slate-400 font-display font-medium mb-4">
+    <a href="index.html" class="hover:text-accent transition-colors">الرئيسية</a>
+    <span>/</span>
+    <a href="index.html#tools" class="hover:text-accent transition-colors">الأدوات التفاعلية</a>
+    <span>/</span>
+    <span class="text-slate-500">لوحة التخطيط</span>
+  </div>
+
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shrink-0 mt-1">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="#60A5FA" stroke-width="1.6"/><path d="M8.5 4.5V19.5" stroke="#3B82F6" stroke-width="1.6"/><path d="M13.5 4.5V19.5" stroke="#3B82F6" stroke-width="1.6"/></svg>
+    </div>
+    <div>
+      <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-navy">لوحة التخطيط الأكاديمية التفاعلية</h1>
+      <p class="text-slate-500 mt-2 text-sm sm:text-[15px] max-w-xl leading-relaxed">
+        نظّم موادك، جدولك، مهامك، وملاحظاتك بسرعة في اللوحة السريعة، أو ارسم خطتك الدراسية بصرياً في اللوحة البصرية. كل شي يُحفظ تلقائياً في متصفحك.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS BAR ============ -->
+<section class="max-w-7xl mx-auto px-5 sm:px-8 mb-6">
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 flex flex-wrap items-center justify-between gap-5">
+    <div class="flex items-center gap-6 sm:gap-10">
+      <div>
+        <p class="text-xs font-display font-medium text-slate-400 mb-1">إجمالي البطاقات</p>
+        <p id="stat-total" class="font-display font-extrabold text-2xl text-navy">0</p>
+      </div>
+      <div class="w-px h-9 bg-slate-200"></div>
+      <div>
+        <p class="text-xs font-display font-medium text-slate-400 mb-1">المهام المنجزة</p>
+        <p id="stat-done" class="font-display font-extrabold text-2xl text-emerald-500">0</p>
+      </div>
+      <div class="w-px h-9 bg-slate-200 hidden sm:block"></div>
+      <div class="hidden sm:block">
+        <p class="text-xs font-display font-medium text-slate-400 mb-1">نسبة الإنجاز</p>
+        <p id="stat-progress" class="font-display font-extrabold text-2xl text-accent">0%</p>
+      </div>
+    </div>
+
+    <button id="clear-board-btn" class="flex items-center gap-2 font-display font-semibold text-sm text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl transition-colors">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19C17.2 19.6 16.7 20 16.1 20H7.9C7.3 20 6.8 19.6 6.7 19L6 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      مسح اللوحة السريعة
+    </button>
+  </div>
+</section>
+
+<!-- ============ KANBAN BOARD ============ -->
+<main class="max-w-7xl mx-auto px-5 sm:px-8 pb-6">
+  <div class="flex items-center gap-2.5 mb-4">
+    <span class="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="7" height="17" rx="1.5" stroke="#60A5FA" stroke-width="1.5"/><rect x="13.5" y="3.5" width="7" height="10" rx="1.5" stroke="#3B82F6" stroke-width="1.5"/></svg>
+    </span>
+    <h2 class="font-display font-bold text-lg text-navy">اللوحة السريعة (Kanban)</h2>
+  </div>
+  <div id="board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"></div>
+</main>
+
+<!-- ============ VISUAL CANVAS SECTION ============ -->
+<section class="max-w-7xl mx-auto px-5 sm:px-8 pb-24">
+
+  <div class="flex items-center gap-2.5 mb-1 mt-10">
+    <span class="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.5" stroke="#60A5FA" stroke-width="1.5"/><circle cx="17" cy="7" r="2.5" stroke="#60A5FA" stroke-width="1.5"/><circle cx="12" cy="17" r="2.5" stroke="#3B82F6" stroke-width="1.5"/><path d="M9 8.5L11 15M15 8.5L13 15M9.5 7H14.5" stroke="#94A3B8" stroke-width="1.4"/></svg>
+    </span>
+    <h2 class="font-display font-bold text-lg text-navy">اللوحة البصرية التفاعلية (Miro-Style)</h2>
+  </div>
+  <p class="text-slate-500 text-sm max-w-2xl mb-5">
+    ضع مواد مقترحة على شكل عقد، اربطها بأسهم لتمثيل المتطلبات السابقة، وارفع صورة الخطة الدراسية الرسمية أو جدول الامتحانات كخلفية.
+  </p>
+
+  <!-- Canvas Toolbar -->
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4 flex flex-wrap items-center gap-2.5">
+    <button id="canvas-add-node" class="canvas-toolbar-btn flex items-center gap-2 font-display font-semibold text-sm text-white bg-navy hover:bg-accent px-4 py-2.5 rounded-xl transition-colors">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      إضافة عقدة مادة
+    </button>
+
+    <button id="canvas-connect-mode" class="canvas-toolbar-btn flex items-center gap-2 font-display font-semibold text-sm text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl transition-colors">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="6" cy="6" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8L16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      ربط بين عقدتين
+    </button>
+
+    <label class="file-upload-btn canvas-toolbar-btn flex items-center gap-2 font-display font-semibold text-sm text-slate-600 border border-slate-200 px-4 py-2.5 rounded-xl transition-colors cursor-pointer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V17C4 18.6569 5.34315 20 7 20H17C18.6569 20 20 18.6569 20 17V15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      رفع خطة/جدول (صورة أو PDF)
+      <input id="canvas-bg-upload" type="file" accept="image/*,.pdf,application/pdf">
+    </label>
+
+    <div class="flex-1"></div>
+
+    <button id="canvas-clear" class="canvas-toolbar-btn flex items-center gap-2 font-display font-semibold text-sm text-red-500 border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-xl transition-colors">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19C17.2 19.6 16.7 20 16.1 20H7.9C7.3 20 6.8 19.6 6.7 19L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      مسح اللوحة البصرية
+    </button>
+  </div>
+
+  <!-- Background controls (shown only when a background exists) -->
+  <div id="bg-controls" class="hidden bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4 flex flex-wrap items-center gap-4">
+    <span class="font-display font-semibold text-xs text-slate-500 flex items-center gap-1.5">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 16L8.5 11.5C9.3 10.7 10.7 10.7 11.5 11.5L16 16M14 14L15.5 12.5C16.3 11.7 17.7 11.7 18.5 12.5L20 14M6 5H18C19.1046 5 20 5.89543 20 7V17C20 18.1046 19.1046 19 18 19H6C4.89543 19 4 18.1046 4 17V7C4 5.89543 4.89543 5 6 5Z" stroke="currentColor" stroke-width="1.5"/></svg>
+      خلفية اللوحة:
+    </span>
+    <div class="flex items-center gap-2 flex-1 min-w-[160px]">
+      <span class="text-xs text-slate-400 font-display">الشفافية</span>
+      <input id="bg-opacity" type="range" min="0.1" max="1" step="0.05" value="0.5" class="flex-1">
+    </div>
+    <button id="bg-remove" class="font-display font-semibold text-xs text-red-500 hover:text-red-600 transition-colors">إزالة الخلفية</button>
+  </div>
+
+  <!-- Canvas Workspace -->
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6">
+    <div id="canvas-scroll" class="canvas-scroll" style="height: 560px;">
+      <div id="canvas-inner" class="canvas-inner">
+        <div id="canvas-bg-layer" class="canvas-bg-layer"></div>
+        <svg id="canvas-svg" class="canvas-svg" width="1800" height="950">
+          <defs>
+            <marker id="arrowhead" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#3B82F6"/>
+            </marker>
+          </defs>
+          <g id="canvas-lines"></g>
+        </svg>
+        <div id="canvas-nodes"></div>
+      </div>
+    </div>
+    <p class="text-xs text-slate-400 font-display text-center py-2.5 border-t border-slate-100">
+      💡 اسحب العقد لتحريكها، مرّر داخل اللوحة للتنقل، واستخدم "ربط بين عقدتين" لرسم الأسهم بينها.
+    </p>
+  </div>
+
+  <!-- Schedule & Exams Tables -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+    <!-- Weekly Schedule -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-slate-100">
+        <h3 class="font-display font-bold text-sm text-navy flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M3.5 9.5H20.5" stroke="#60A5FA" stroke-width="1.6"/></svg>
+          جدول الفصل الأسبوعي
+        </h3>
+      </div>
+      <div id="schedule-rows" class="flex flex-col gap-2.5 p-5"></div>
+      <div class="px-5 pb-5">
+        <button id="add-schedule-row" class="w-full flex items-center justify-center gap-2 font-display font-semibold text-xs text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-4 py-2.5 rounded-xl transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          إضافة محاضرة
+        </button>
+      </div>
+    </div>
+
+    <!-- Exams -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between p-5 border-b border-slate-100">
+        <h3 class="font-display font-bold text-sm text-navy flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M8 12L11 15L16 9" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          جدول الامتحانات
+        </h3>
+      </div>
+      <div id="exam-rows" class="flex flex-col gap-2.5 p-5"></div>
+      <div class="px-5 pb-5">
+        <button id="add-exam-row" class="w-full flex items-center justify-center gap-2 font-display font-semibold text-xs text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-4 py-2.5 rounded-xl transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          إضافة امتحان
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- Floating add button -->
+<button id="fab-add" aria-label="إضافة بطاقة جديدة"
+  class="fixed bottom-6 left-6 z-30 w-14 h-14 rounded-2xl bg-navy hover:bg-accent text-white shadow-lg shadow-navy/30 flex items-center justify-center transition-colors">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+</button>
+
+<!-- ============ KANBAN ADD/EDIT MODAL ============ -->
+<div id="modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100">
+      <h3 id="modal-title" class="font-display font-bold text-lg text-navy">إضافة بطاقة جديدة</h3>
+      <button id="modal-close" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-5">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">عنوان البطاقة</label>
+        <input id="field-title" type="text" placeholder="مثال: تسليم مشروع قواعد البيانات"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">العمود / التصنيف</label>
+        <div class="select-wrap">
+          <select id="field-column" class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+            <option value="remaining">الخطة الشجرية / المواد المتبقية</option>
+            <option value="schedule">جدول الفصل الحالي</option>
+            <option value="tasks">مهام واختبارات قادمة</option>
+            <option value="notes">ملاحظات سريعة</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">الأولوية / الحالة</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" data-priority="urgent" class="priority-picker-option flex flex-col items-center gap-1.5 border border-red-200 bg-red-50 rounded-xl py-3 text-red-600 font-display font-semibold text-xs">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            عاجل
+          </button>
+          <button type="button" data-priority="normal" class="priority-picker-option flex flex-col items-center gap-1.5 border border-blue-200 bg-blue-50 rounded-xl py-3 text-blue-600 font-display font-semibold text-xs">
+            <span class="w-2.5 h-2.5 rounded-full bg-accent"></span>
+            عادي
+          </button>
+          <button type="button" data-priority="done" class="priority-picker-option flex flex-col items-center gap-1.5 border border-emerald-200 bg-emerald-50 rounded-xl py-3 text-emerald-600 font-display font-semibold text-xs">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            منجز
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">تاريخ (اختياري)</label>
+        <input id="field-date" type="date"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">التفاصيل</label>
+        <textarea id="field-details" rows="3" placeholder="أضف أي تفاصيل إضافية هنا..."
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors resize-none"></textarea>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 p-6 pt-2 border-t border-slate-100">
+      <button id="modal-cancel" class="flex-1 font-display font-semibold text-sm text-slate-500 border border-slate-200 hover:bg-slate-50 px-5 py-3 rounded-xl transition-colors">
+        إلغاء
+      </button>
+      <button id="modal-save" class="flex-1 font-display font-bold text-sm bg-navy hover:bg-accent text-white px-5 py-3 rounded-xl transition-colors">
+        حفظ البطاقة
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CANVAS NODE MODAL ============ -->
+<div id="node-modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="node-modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100">
+      <h3 id="node-modal-title" class="font-display font-bold text-lg text-navy">إضافة عقدة</h3>
+      <button id="node-modal-close" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="p-6 flex flex-col gap-5">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">اسم المادة / العقدة</label>
+        <input id="node-field-label" type="text" placeholder="مثال: التفاضل والتكامل 1"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">لون العقدة</label>
+        <div class="grid grid-cols-6 gap-2" id="node-color-picker">
+          <button type="button" data-color="blue" class="color-swatch w-full aspect-square rounded-lg bg-blue-400"></button>
+          <button type="button" data-color="violet" class="color-swatch w-full aspect-square rounded-lg bg-violet-400"></button>
+          <button type="button" data-color="emerald" class="color-swatch w-full aspect-square rounded-lg bg-emerald-400"></button>
+          <button type="button" data-color="amber" class="color-swatch w-full aspect-square rounded-lg bg-amber-400"></button>
+          <button type="button" data-color="rose" class="color-swatch w-full aspect-square rounded-lg bg-rose-400"></button>
+          <button type="button" data-color="slate" class="color-swatch w-full aspect-square rounded-lg bg-slate-400"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 p-6 pt-2 border-t border-slate-100">
+      <button id="node-modal-cancel" class="flex-1 font-display font-semibold text-sm text-slate-500 border border-slate-200 hover:bg-slate-50 px-5 py-3 rounded-xl transition-colors">
+        إلغاء
+      </button>
+      <button id="node-modal-save" class="flex-1 font-display font-bold text-sm bg-navy hover:bg-accent text-white px-5 py-3 rounded-xl transition-colors">
+        حفظ
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* =====================================================================
+     STORAGE / STATE MODEL
+     Structured so read-only master templates (e.g. هندسة الحاسوب) can be
+     duplicated into the user's own editable canvas later by calling
+     duplicateTemplateToBoard(templateId). See MASTER_TEMPLATES below.
+  ===================================================================== */
+  const STORAGE_KEY = 'studex_planning_board_v2';
+  const LEGACY_KANBAN_KEY = 'studex_planning_board_v1';
+  const CANVAS_INIT_FLAG_KEY = 'studeX_canvas_initialized';
+  const CANVAS_CLEARED_FLAG_KEY = 'studeX_canvas_cleared';
+
+  let state = {
+    kanban: [],
+    canvas: {
+      nodes: [],       // {id, x, y, label, color}
+      connections: [], // {id, from, to}
+      background: { type: null, dataUrl: '', opacity: 0.5 }, // type: 'image' | 'pdf' | null
+    },
+    schedule: [], // {id, day, time, course, room}
+    exams: [],    // {id, course, date, time, room}
+  };
+
+  function cryptoId() {
+    return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  /**
+   * IMPORTANT: the visual canvas is NEVER auto-populated with hardcoded/demo
+   * nodes based on the nodes array being empty. An empty `state.canvas.nodes`
+   * array always means exactly that — an empty canvas — whether that's
+   * because the user just cleared it or because they've simply never added
+   * anything yet. The only way demo/master-template nodes ever enter the
+   * board is through an explicit, user-initiated call to
+   * duplicateTemplateToBoard() (see MASTER_TEMPLATES below).
+   *
+   * CANVAS_INIT_FLAG_KEY exists as an explicit "has this browser ever
+   * initialized the board before" marker, kept separate from the main state
+   * blob, for any future first-run-only logic (e.g. a one-time onboarding
+   * hint). It is set once on first load and again whenever the canvas is
+   * cleared — it must never be used as a condition for re-seeding nodes.
+   */
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const savedNodes = (parsed.canvas && parsed.canvas.nodes) || [];
+        const savedConnections = (parsed.canvas && parsed.canvas.connections) || [];
+
+        state = {
+          kanban: parsed.kanban || [],
+          canvas: {
+            nodes: savedNodes,
+            connections: savedConnections,
+            background: (parsed.canvas && parsed.canvas.background) || { type: null, dataUrl: '', opacity: 0.5 },
+          },
+          schedule: parsed.schedule || [],
+          exams: parsed.exams || [],
+        };
+
+        // Default/demo nodes may ONLY ever be inserted when the user has
+        // never cleared the canvas before AND there is nothing saved to
+        // restore. Once studeX_canvas_cleared is set, this block can never
+        // run again — even after a refresh — so nothing respawns.
+        if (!localStorage.getItem('studeX_canvas_cleared') && savedNodes.length === 0) {
+          // Intentionally left empty: no hardcoded default nodes are
+          // auto-inserted in this build. This guard exists so any future
+          // default/demo seeding logic can only ever execute here, under
+          // these exact conditions.
+        }
+
+        if (!localStorage.getItem(CANVAS_INIT_FLAG_KEY)) {
+          localStorage.setItem(CANVAS_INIT_FLAG_KEY, 'true');
+        }
+        return;
+      }
+
+      // Migrate legacy v1 (kanban-only) storage if present
+      const legacyRaw = localStorage.getItem(LEGACY_KANBAN_KEY);
+      if (legacyRaw) {
+        const legacyCards = JSON.parse(legacyRaw);
+        state.kanban = Array.isArray(legacyCards) ? legacyCards : [];
+        saveState();
+        localStorage.setItem(CANVAS_INIT_FLAG_KEY, 'true');
+        return;
+      }
+
+      // True first-ever visit — seed friendly sample Kanban cards only.
+      // The visual canvas intentionally starts empty (0 nodes, 0 connections).
+      state.kanban = seedKanban();
+      localStorage.setItem(CANVAS_INIT_FLAG_KEY, 'true');
+    } catch (e) {
+      console.warn('تعذر تحميل بيانات اللوحة', e);
+      state.kanban = seedKanban();
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('تعذر حفظ اللوحة في التخزين المحلي', e);
+      alert('تعذر حفظ بعض البيانات محلياً (قد تكون الصورة/الملف المرفوع كبيراً جداً). حاول رفع ملف أصغر.');
+    }
+  }
+
+  function seedKanban() {
+    return [
+      { id: cryptoId(), title: 'هيكلة بيانات (متطلب سابق: برمجة 2)', column: 'remaining', priority: 'normal', date: '', details: '3 ساعات معتمدة' },
+      { id: cryptoId(), title: 'شبكات حاسوب', column: 'schedule', priority: 'normal', date: '', details: 'أحد - ثلاثاء 10:00 صباحاً' },
+      { id: cryptoId(), title: 'امتحان منتصف - قواعد بيانات', column: 'tasks', priority: 'urgent', date: '', details: 'راجع الفصل 4 و5' },
+      { id: cryptoId(), title: 'تذكير', column: 'notes', priority: 'done', date: '', details: 'راسل الدكتور بخصوص درجة المشروع' },
+    ];
+  }
+
+  function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /* =====================================================================
+     KANBAN BOARD (unchanged behaviour, ported to shared state)
+  ===================================================================== */
+  const columns = [
+    { id: 'remaining', title: 'الخطة الشجرية / المواد المتبقية', icon: `<path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H10.5C11.3284 5 12 5.67157 12 6.5V19L9 17L6 19V6.5" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8H17.5C18.3284 8 19 8.67157 19 9.5V19L16.5 17.5L12 19" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/>`, accent: 'bg-blue-50' },
+    { id: 'schedule', title: 'جدول الفصل الحالي', icon: `<rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M3.5 9.5H20.5" stroke="#60A5FA" stroke-width="1.6"/><path d="M8 3V6M16 3V6" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/>`, accent: 'bg-violet-50' },
+    { id: 'tasks', title: 'مهام واختبارات قادمة', icon: `<rect x="4" y="4" width="16" height="16" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M8 12L11 15L16 9" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`, accent: 'bg-amber-50' },
+    { id: 'notes', title: 'ملاحظات سريعة', icon: `<path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H15L20 9V18.5C20 19.3284 19.3284 20 18.5 20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4V8.5C15 8.77614 15.2239 9 15.5 9H20" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/>`, accent: 'bg-pink-50' },
+  ];
+
+  const priorityMeta = {
+    urgent: { label: 'عاجل', dot: 'bg-red-500', badge: 'bg-red-50 text-red-600 border-red-200', border: 'border-r-red-500' },
+    normal: { label: 'عادي', dot: 'bg-accent', badge: 'bg-blue-50 text-blue-600 border-blue-200', border: 'border-r-accent' },
+    done:   { label: 'منجز', dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-600 border-emerald-200', border: 'border-r-emerald-500' },
+  };
+  const priorityCycle = ['normal', 'urgent', 'done'];
+
+  const board = document.getElementById('board');
+  let editingId = null;
+  let selectedPriority = 'normal';
+  let draggedCardId = null;
+
+  function renderBoard() {
+    board.innerHTML = columns.map(col => columnHTML(col)).join('');
+    attachColumnDnD();
+    attachCardEvents();
+    updateStats();
+  }
+
+  function columnHTML(col) {
+    const colCards = state.kanban.filter(c => c.column === col.id);
+    return `
+      <div class="flex flex-col bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-3 p-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-8 h-8 rounded-lg ${col.accent} flex items-center justify-center shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">${col.icon}</svg>
+            </span>
+            <h3 class="font-display font-bold text-sm text-navy truncate">${col.title}</h3>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs font-display font-semibold text-slate-400 bg-surface border border-slate-200 rounded-full px-2 py-0.5">${colCards.length}</span>
+            <button data-add-column="${col.id}" aria-label="إضافة بطاقة" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-accent hover:bg-accent/5 transition-colors">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="board-col flex-1 flex flex-col gap-3 p-4 border-2 border-transparent rounded-b-2xl" data-column="${col.id}">
+          ${colCards.length ? colCards.map(c => cardHTML(c)).join('') : `<div class="flex-1 flex items-center justify-center text-center text-xs text-slate-300 font-display font-medium py-8 select-none">لا توجد بطاقات هنا بعد</div>`}
+        </div>
+      </div>
+    `;
+  }
+
+  function cardHTML(c) {
+    const pm = priorityMeta[c.priority] || priorityMeta.normal;
+    const dateChip = c.date
+      ? `<span class="inline-flex items-center gap-1 text-[11px] font-display font-medium text-slate-400 mt-2"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5H20.5" stroke="currentColor" stroke-width="1.6"/></svg>${formatDate(c.date)}</span>`
+      : '';
+
+    return `
+      <div class="task-card bg-surface border border-slate-200 border-r-4 ${pm.border} rounded-xl p-4" draggable="true" data-card-id="${c.id}">
+        <div class="flex items-start justify-between gap-2">
+          <h4 class="font-display font-semibold text-sm text-navy leading-snug flex-1">${escapeHTML(c.title) || 'بدون عنوان'}</h4>
+          <div class="flex items-center gap-1 shrink-0">
+            <button data-edit-id="${c.id}" aria-label="تعديل" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-accent hover:bg-white transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 20L4.7 16.9C4.8 16.4 5.1 16 5.4 15.7L15.7 5.4C16.5 4.6 17.8 4.6 18.6 5.4C19.4 6.2 19.4 7.5 18.6 8.3L8.3 18.6C8 18.9 7.6 19.2 7.1 19.3L4 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </button>
+            <button data-delete-id="${c.id}" aria-label="حذف" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-white transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        ${c.details ? `<p class="text-xs text-slate-500 leading-relaxed mt-1.5">${escapeHTML(c.details)}</p>` : ''}
+        ${dateChip}
+        <button data-cycle-id="${c.id}" class="priority-chip inline-flex items-center gap-1.5 mt-3 text-[11px] font-display font-semibold px-2.5 py-1 rounded-full border ${pm.badge}">
+          <span class="w-1.5 h-1.5 rounded-full ${pm.dot}"></span>${pm.label}
+        </button>
+      </div>
+    `;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString('ar-JO', { day: 'numeric', month: 'short' });
+  }
+
+  function updateStats() {
+    const total = state.kanban.length;
+    const done = state.kanban.filter(c => c.priority === 'done').length;
+    const progress = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-progress').textContent = `${progress}%`;
+  }
+
+  function attachCardEvents() {
+    board.querySelectorAll('[data-edit-id]').forEach(btn => btn.addEventListener('click', () => openModal(btn.dataset.editId)));
+    board.querySelectorAll('[data-delete-id]').forEach(btn => btn.addEventListener('click', () => deleteCard(btn.dataset.deleteId)));
+    board.querySelectorAll('[data-cycle-id]').forEach(btn => btn.addEventListener('click', () => cyclePriority(btn.dataset.cycleId)));
+    board.querySelectorAll('[data-add-column]').forEach(btn => btn.addEventListener('click', () => openModal(null, btn.dataset.addColumn)));
+  }
+
+  function deleteCard(id) {
+    state.kanban = state.kanban.filter(c => c.id !== id);
+    saveState();
+    renderBoard();
+  }
+
+  function cyclePriority(id) {
+    const card = state.kanban.find(c => c.id === id);
+    if (!card) return;
+    const idx = priorityCycle.indexOf(card.priority);
+    card.priority = priorityCycle[(idx + 1) % priorityCycle.length];
+    saveState();
+    renderBoard();
+  }
+
+  function attachColumnDnD() {
+    board.querySelectorAll('.task-card').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        draggedCardId = card.dataset.cardId;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => { card.classList.remove('dragging'); draggedCardId = null; });
+    });
+    board.querySelectorAll('.board-col').forEach(col => {
+      col.addEventListener('dragover', (e) => { e.preventDefault(); col.classList.add('drag-over'); });
+      col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+      col.addEventListener('drop', (e) => {
+        e.preventDefault();
+        col.classList.remove('drag-over');
+        if (!draggedCardId) return;
+        const card = state.kanban.find(c => c.id === draggedCardId);
+        if (card) { card.column = col.dataset.column; saveState(); renderBoard(); }
+      });
+    });
+  }
+
+  // Kanban modal
+  const modalBackdrop = document.getElementById('modal-backdrop');
+  const modalTitle = document.getElementById('modal-title');
+  const fieldTitle = document.getElementById('field-title');
+  const fieldColumn = document.getElementById('field-column');
+  const fieldDate = document.getElementById('field-date');
+  const fieldDetails = document.getElementById('field-details');
+  const priorityButtons = document.querySelectorAll('.priority-picker-option');
+
+  function openModal(id, presetColumn) {
+    editingId = id;
+    const existing = id ? state.kanban.find(c => c.id === id) : null;
+    modalTitle.textContent = existing ? 'تعديل البطاقة' : 'إضافة بطاقة جديدة';
+    fieldTitle.value = existing ? existing.title : '';
+    fieldColumn.value = existing ? existing.column : (presetColumn || 'remaining');
+    fieldDate.value = existing ? (existing.date || '') : '';
+    fieldDetails.value = existing ? (existing.details || '') : '';
+    selectedPriority = existing ? existing.priority : 'normal';
+    updatePriorityPicker();
+    modalBackdrop.classList.add('show');
+    setTimeout(() => fieldTitle.focus(), 100);
+  }
+
+  function closeModal() { modalBackdrop.classList.remove('show'); editingId = null; }
+
+  function updatePriorityPicker() {
+    priorityButtons.forEach(btn => btn.classList.toggle('selected', btn.dataset.priority === selectedPriority));
+  }
+
+  priorityButtons.forEach(btn => btn.addEventListener('click', () => { selectedPriority = btn.dataset.priority; updatePriorityPicker(); }));
+
+  document.getElementById('fab-add').addEventListener('click', () => openModal(null));
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+  document.getElementById('modal-save').addEventListener('click', () => {
+    const title = fieldTitle.value.trim();
+    if (!title) {
+      fieldTitle.classList.add('border-red-400', 'ring-1', 'ring-red-300');
+      fieldTitle.focus();
+      return;
+    }
+    fieldTitle.classList.remove('border-red-400', 'ring-1', 'ring-red-300');
+    const payload = { title, column: fieldColumn.value, priority: selectedPriority, date: fieldDate.value, details: fieldDetails.value.trim() };
+    if (editingId) {
+      const idx = state.kanban.findIndex(c => c.id === editingId);
+      if (idx !== -1) state.kanban[idx] = { ...state.kanban[idx], ...payload };
+    } else {
+      state.kanban.push({ id: cryptoId(), ...payload });
+    }
+    saveState();
+    renderBoard();
+    closeModal();
+  });
+
+  document.getElementById('clear-board-btn').addEventListener('click', () => {
+    if (state.kanban.length === 0) return;
+    if (confirm('هل أنت متأكد أنك تريد مسح جميع بطاقات اللوحة السريعة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+      state.kanban = [];
+      saveState();
+      renderBoard();
+    }
+  });
+
+  /* =====================================================================
+     VISUAL CANVAS (Miro-style)
+  ===================================================================== */
+  const canvasNodesEl = document.getElementById('canvas-nodes');
+  const canvasLinesEl = document.getElementById('canvas-lines');
+  const canvasBgLayer = document.getElementById('canvas-bg-layer');
+  const canvasInner = document.getElementById('canvas-inner');
+
+  const nodeColorMap = {
+    blue: '#3B82F6', violet: '#8B5CF6', emerald: '#10B981',
+    amber: '#F59E0B', rose: '#F43F5E', slate: '#64748B',
+  };
+
+  let connectMode = false;
+  let connectFromId = null;
+  let editingNodeId = null;
+  let selectedNodeColor = 'blue';
+
+  function renderCanvas() {
+    renderCanvasBackground();
+    renderCanvasNodes();
+    renderCanvasConnections();
+  }
+
+  function renderCanvasBackground() {
+    const bg = state.canvas.background;
+    const bgControls = document.getElementById('bg-controls');
+    if (!bg || !bg.type || !bg.dataUrl) {
+      canvasBgLayer.innerHTML = '';
+      bgControls.classList.add('hidden');
+      return;
+    }
+    bgControls.classList.remove('hidden');
+    document.getElementById('bg-opacity').value = bg.opacity;
+    if (bg.type === 'image') {
+      canvasBgLayer.innerHTML = `<img src="${bg.dataUrl}" style="opacity:${bg.opacity}" alt="خلفية الخطة الدراسية">`;
+    } else if (bg.type === 'pdf') {
+      canvasBgLayer.innerHTML = `<iframe src="${bg.dataUrl}" style="opacity:${bg.opacity}" title="مستند الخطة الدراسية"></iframe>`;
+    }
+  }
+
+  function renderCanvasNodes() {
+    canvasNodesEl.innerHTML = state.canvas.nodes.map(n => nodeHTML(n)).join('');
+    attachNodeEvents();
+  }
+
+  function nodeHTML(n) {
+    const color = nodeColorMap[n.color] || nodeColorMap.blue;
+    return `
+      <div class="canvas-node bg-white border-2 rounded-xl shadow-sm p-3" style="left:${n.x}px; top:${n.y}px; border-color:${color};" data-node-id="${n.id}">
+        <div class="flex items-start justify-between gap-1.5 mb-1">
+          <span class="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style="background:${color}"></span>
+          <p class="font-display font-semibold text-xs text-navy leading-snug flex-1">${escapeHTML(n.label) || 'مادة بدون اسم'}</p>
+        </div>
+        <div class="flex items-center justify-end gap-1 mt-1.5">
+          <button data-node-edit="${n.id}" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-accent hover:bg-slate-50 transition-colors">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 20L4.7 16.9C4.8 16.4 5.1 16 5.4 15.7L15.7 5.4C16.5 4.6 17.8 4.6 18.6 5.4C19.4 6.2 19.4 7.5 18.6 8.3L8.3 18.6C8 18.9 7.6 19.2 7.1 19.3L4 20Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          </button>
+          <button data-node-delete="${n.id}" class="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-red-500 hover:bg-slate-50 transition-colors">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function nodeCenter(n) {
+    return { x: n.x + 84, y: n.y + 34 }; // half of 168px width, approx half height
+  }
+
+  function renderCanvasConnections() {
+    canvasLinesEl.innerHTML = state.canvas.connections.map(conn => {
+      const from = state.canvas.nodes.find(n => n.id === conn.from);
+      const to = state.canvas.nodes.find(n => n.id === conn.to);
+      if (!from || !to) return '';
+      const p1 = nodeCenter(from);
+      const p2 = nodeCenter(to);
+      return `<line class="connection-line" data-conn-id="${conn.id}" x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrowhead)"><title>انقر لحذف الرابط</title></line>`;
+    }).join('');
+
+    canvasLinesEl.querySelectorAll('.connection-line').forEach(line => {
+      line.style.pointerEvents = 'stroke';
+      line.addEventListener('click', () => {
+        if (confirm('حذف هذا الرابط بين المادتين؟')) {
+          state.canvas.connections = state.canvas.connections.filter(c => c.id !== line.dataset.connId);
+          saveState();
+          renderCanvasConnections();
+        }
+      });
+    });
+  }
+
+  function updateConnectionsForNode(nodeId) {
+    const node = state.canvas.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+    const center = nodeCenter(node);
+    state.canvas.connections.forEach(conn => {
+      const line = canvasLinesEl.querySelector(`[data-conn-id="${conn.id}"]`);
+      if (!line) return;
+      if (conn.from === nodeId) { line.setAttribute('x1', center.x); line.setAttribute('y1', center.y); }
+      if (conn.to === nodeId) { line.setAttribute('x2', center.x); line.setAttribute('y2', center.y); }
+    });
+  }
+
+  function attachNodeEvents() {
+    canvasNodesEl.querySelectorAll('.canvas-node').forEach(el => {
+      el.addEventListener('pointerdown', onNodePointerDown);
+      el.addEventListener('click', (e) => {
+        if (e.target.closest('[data-node-edit], [data-node-delete]')) return;
+        if (connectMode) handleConnectClick(el.dataset.nodeId);
+      });
+    });
+    canvasNodesEl.querySelectorAll('[data-node-edit]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openNodeModal(btn.dataset.nodeEdit); }));
+    canvasNodesEl.querySelectorAll('[data-node-delete]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); deleteNode(btn.dataset.nodeDelete); }));
+
+    if (connectFromId) {
+      const el = canvasNodesEl.querySelector(`[data-node-id="${connectFromId}"]`);
+      if (el) el.classList.add('connecting-source');
+    }
+  }
+
+  function deleteNode(id) {
+    state.canvas.nodes = state.canvas.nodes.filter(n => n.id !== id);
+    state.canvas.connections = state.canvas.connections.filter(c => c.from !== id && c.to !== id);
+    saveState();
+    renderCanvas();
+  }
+
+  function handleConnectClick(nodeId) {
+    if (!connectFromId) {
+      connectFromId = nodeId;
+      renderCanvasNodes();
+      return;
+    }
+    if (connectFromId === nodeId) {
+      connectFromId = null;
+      renderCanvasNodes();
+      return;
+    }
+    const exists = state.canvas.connections.some(c => c.from === connectFromId && c.to === nodeId);
+    if (!exists) {
+      state.canvas.connections.push({ id: cryptoId(), from: connectFromId, to: nodeId });
+      saveState();
+    }
+    connectFromId = null;
+    renderCanvas();
+  }
+
+  // Node dragging via Pointer Events
+  let dragState = null;
+
+  function onNodePointerDown(e) {
+    if (e.target.closest('[data-node-edit], [data-node-delete]')) return;
+    if (connectMode) return; // clicking handles connection instead of drag
+    const el = e.currentTarget;
+    const nodeId = el.dataset.nodeId;
+    const node = state.canvas.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    dragState = {
+      nodeId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startX: node.x,
+      startY: node.y,
+    };
+    el.setPointerCapture(e.pointerId);
+    el.addEventListener('pointermove', onNodePointerMove);
+    el.addEventListener('pointerup', onNodePointerUp);
+    el.addEventListener('pointercancel', onNodePointerUp);
+  }
+
+  function onNodePointerMove(e) {
+    if (!dragState || dragState.nodeId !== e.currentTarget.dataset.nodeId) return;
+    const dx = e.clientX - dragState.startClientX;
+    const dy = e.clientY - dragState.startClientY;
+    let newX = Math.max(0, Math.min(1800 - 168, dragState.startX + dx));
+    let newY = Math.max(0, Math.min(950 - 70, dragState.startY + dy));
+
+    const node = state.canvas.nodes.find(n => n.id === dragState.nodeId);
+    if (node) {
+      node.x = newX;
+      node.y = newY;
+      e.currentTarget.style.left = newX + 'px';
+      e.currentTarget.style.top = newY + 'px';
+      updateConnectionsForNode(node.id);
+    }
+  }
+
+  function onNodePointerUp(e) {
+    if (dragState) {
+      saveState();
+      dragState = null;
+    }
+    e.currentTarget.removeEventListener('pointermove', onNodePointerMove);
+    e.currentTarget.removeEventListener('pointerup', onNodePointerUp);
+    e.currentTarget.removeEventListener('pointercancel', onNodePointerUp);
+  }
+
+  // Node modal (add/edit)
+  const nodeModalBackdrop = document.getElementById('node-modal-backdrop');
+  const nodeModalTitle = document.getElementById('node-modal-title');
+  const nodeFieldLabel = document.getElementById('node-field-label');
+  const nodeColorButtons = document.querySelectorAll('#node-color-picker .color-swatch');
+
+  function openNodeModal(id) {
+    editingNodeId = id;
+    const existing = id ? state.canvas.nodes.find(n => n.id === id) : null;
+    nodeModalTitle.textContent = existing ? 'تعديل العقدة' : 'إضافة عقدة';
+    nodeFieldLabel.value = existing ? existing.label : '';
+    selectedNodeColor = existing ? existing.color : 'blue';
+    updateNodeColorPicker();
+    nodeModalBackdrop.classList.add('show');
+    setTimeout(() => nodeFieldLabel.focus(), 100);
+  }
+
+  function closeNodeModal() { nodeModalBackdrop.classList.remove('show'); editingNodeId = null; }
+
+  function updateNodeColorPicker() {
+    nodeColorButtons.forEach(btn => btn.classList.toggle('selected', btn.dataset.color === selectedNodeColor));
+  }
+
+  nodeColorButtons.forEach(btn => btn.addEventListener('click', () => { selectedNodeColor = btn.dataset.color; updateNodeColorPicker(); }));
+
+  document.getElementById('canvas-add-node').addEventListener('click', () => openNodeModal(null));
+  document.getElementById('node-modal-close').addEventListener('click', closeNodeModal);
+  document.getElementById('node-modal-cancel').addEventListener('click', closeNodeModal);
+  nodeModalBackdrop.addEventListener('click', (e) => { if (e.target === nodeModalBackdrop) closeNodeModal(); });
+
+  document.getElementById('node-modal-save').addEventListener('click', () => {
+    const label = nodeFieldLabel.value.trim();
+    if (!label) { nodeFieldLabel.classList.add('border-red-400', 'ring-1', 'ring-red-300'); nodeFieldLabel.focus(); return; }
+    nodeFieldLabel.classList.remove('border-red-400', 'ring-1', 'ring-red-300');
+
+    if (editingNodeId) {
+      const node = state.canvas.nodes.find(n => n.id === editingNodeId);
+      if (node) { node.label = label; node.color = selectedNodeColor; }
+    } else {
+      const offset = state.canvas.nodes.length * 24;
+      state.canvas.nodes.push({
+        id: cryptoId(), label, color: selectedNodeColor,
+        x: 60 + (offset % 500), y: 60 + Math.floor(offset / 500) * 110,
+      });
+    }
+    saveState();
+    renderCanvas();
+    closeNodeModal();
+  });
+
+  // Connect mode toggle
+  const connectBtn = document.getElementById('canvas-connect-mode');
+  connectBtn.addEventListener('click', () => {
+    connectMode = !connectMode;
+    connectFromId = null;
+    connectBtn.classList.toggle('active', connectMode);
+    canvasInner.style.cursor = connectMode ? 'crosshair' : '';
+    renderCanvasNodes();
+  });
+
+  // Background upload
+  document.getElementById('canvas-bg-upload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 4 * 1024 * 1024) {
+      const proceed = confirm('حجم الملف كبير نسبياً وقد يفشل الحفظ التلقائي في المتصفح. هل تريد المتابعة على أي حال؟');
+      if (!proceed) { e.target.value = ''; return; }
+    }
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.canvas.background = { type: isPdf ? 'pdf' : 'image', dataUrl: reader.result, opacity: 0.5 };
+      saveState();
+      renderCanvasBackground();
+    };
+    reader.onerror = () => alert('تعذر قراءة الملف. حاول مرة أخرى بملف آخر.');
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('bg-opacity').addEventListener('input', (e) => {
+    state.canvas.background.opacity = parseFloat(e.target.value);
+    const img = canvasBgLayer.querySelector('img, iframe');
+    if (img) img.style.opacity = state.canvas.background.opacity;
+  });
+  document.getElementById('bg-opacity').addEventListener('change', saveState);
+
+  document.getElementById('bg-remove').addEventListener('click', () => {
+    state.canvas.background = { type: null, dataUrl: '', opacity: 0.5 };
+    saveState();
+    renderCanvasBackground();
+  });
+
+  /**
+   * Fully wipes the visual canvas: in-memory state, on-screen DOM, and
+   * persisted storage. After this runs, the canvas is guaranteed to show
+   * exactly 0 nodes and 0 connections — nothing anywhere re-populates it.
+   */
+  function clearCanvas() {
+    // 1. Clear the in-memory node/connection arrays completely
+    state.canvas.nodes = [];
+    state.canvas.connections = [];
+    state.canvas.background = { type: null, dataUrl: '', opacity: 0.5 };
+
+    // 2. Exit connect-mode / drag state so no stale references linger
+    connectFromId = null;
+    connectMode = false;
+    connectBtn.classList.remove('active');
+    canvasInner.style.cursor = '';
+    dragState = null;
+
+    // 3. Flag that the user explicitly cleared the board — checked on every
+    //    future load so default/demo nodes can never be reinserted again
+    localStorage.setItem('studeX_canvas_cleared', 'true');
+
+    // 4. Remove any per-field canvas keys so nothing stale can be read back
+    localStorage.removeItem('studeX_canvas_nodes');
+    localStorage.removeItem('studeX_canvas_connections');
+
+    // 5. Persist the cleared state in the main combined store too
+    saveState();
+    localStorage.setItem(CANVAS_INIT_FLAG_KEY, 'true');
+
+    // 6. Empty the DOM containers for nodes/lines/background immediately
+    canvasNodesEl.innerHTML = '';
+    canvasLinesEl.innerHTML = '';
+    canvasBgLayer.innerHTML = '';
+    document.getElementById('bg-controls').classList.add('hidden');
+
+    // 7. Re-render immediately so the UI reflects the empty state right away
+    renderCanvas();
+  }
+
+  document.getElementById('canvas-clear').addEventListener('click', () => {
+    const confirmed = confirm('هل تريد مسح جميع عناصر اللوحة البصرية (العقد، الروابط بينها، والخلفية المرفوعة)؟ لا يمكن التراجع عن هذا الإجراء.');
+    if (!confirmed) return;
+    clearCanvas();
+  });
+
+  /* =====================================================================
+     READ-ONLY MASTER TEMPLATES
+     These represent pre-built department/major plans (e.g. هندسة الحاسوب)
+     that will eventually be offered through a template picker UI. They are
+     NOT part of `state` and are never written to localStorage directly —
+     a template is only ever *duplicated* into the user's own editable
+     `state.canvas`, at which point it becomes normal, editable, persisted
+     data. This keeps master templates safe from accidental edits while
+     letting students start from a ready-made curriculum map.
+  ===================================================================== */
+  const MASTER_TEMPLATES = {
+    computerEngineering: {
+      id: 'computerEngineering',
+      name: 'هندسة الحاسوب',
+      readOnly: true,
+      nodes: [
+        { label: 'تفاضل وتكامل 1', color: 'blue', x: 40, y: 60 },
+        { label: 'تفاضل وتكامل 2', color: 'blue', x: 280, y: 60 },
+        { label: 'دوائر كهربائية 1', color: 'violet', x: 520, y: 60 },
+        { label: 'برمجة 1', color: 'emerald', x: 40, y: 220 },
+        { label: 'برمجة 2', color: 'emerald', x: 280, y: 220 },
+        { label: 'هيكلة بيانات', color: 'emerald', x: 520, y: 220 },
+        { label: 'دوائر منطقية', color: 'amber', x: 760, y: 220 },
+        { label: 'نظم تشغيل', color: 'rose', x: 760, y: 60 },
+      ],
+      connections: [
+        [0, 1], [1, 2],
+        [3, 4], [4, 5], [5, 6],
+        [2, 6], [4, 7],
+      ],
+    },
+    // Future majors can be registered here, e.g. `softwareEngineering: {...}`,
+    // and surfaced later via a "القوالب الجاهزة" picker without any change
+    // to the duplication logic below.
+  };
+
+  /**
+   * Copies a read-only master template into the user's own editable canvas
+   * state, generating fresh IDs so it behaves like any user-created content
+   * from that point on (draggable, editable, deletable, and persisted).
+   */
+  function duplicateTemplateToBoard(templateId) {
+    const template = MASTER_TEMPLATES[templateId];
+    if (!template) return;
+
+    const idMap = [];
+    const newNodes = template.nodes.map((n, i) => {
+      const id = cryptoId();
+      idMap[i] = id;
+      return { id, label: n.label, color: n.color || 'blue', x: n.x, y: n.y };
+    });
+    const newConnections = template.connections.map(([fromIdx, toIdx]) => ({
+      id: cryptoId(), from: idMap[fromIdx], to: idMap[toIdx],
+    }));
+
+    state.canvas.nodes = newNodes;
+    state.canvas.connections = newConnections;
+    saveState();
+    renderCanvas();
+  }
+
+  /* =====================================================================
+     SCHEDULE & EXAM TABLES
+  ===================================================================== */
+  const dayOptions = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+  function renderScheduleRows() {
+    const container = document.getElementById('schedule-rows');
+    container.innerHTML = state.schedule.map(row => `
+      <div class="grid grid-cols-[1fr_1fr_1.3fr_1fr_36px] gap-2 items-center" data-row-id="${row.id}">
+        <div class="select-wrap">
+          <select data-field="day" class="w-full appearance-none bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+            ${dayOptions.map(d => `<option value="${d}" ${d === row.day ? 'selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </div>
+        <input data-field="time" type="text" placeholder="10:00 ص" value="${escapeHTML(row.time)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <input data-field="course" type="text" placeholder="اسم المادة" value="${escapeHTML(row.course)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <input data-field="room" type="text" placeholder="القاعة" value="${escapeHTML(row.room)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <button data-remove-schedule="${row.id}" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    `).join('') || `<p class="text-xs text-slate-300 font-display text-center py-4">لا توجد محاضرات مضافة بعد</p>`;
+
+    container.querySelectorAll('[data-row-id]').forEach(rowEl => {
+      const id = rowEl.dataset.rowId;
+      rowEl.querySelectorAll('[data-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          const row = state.schedule.find(r => r.id === id);
+          if (row) { row[input.dataset.field] = input.value; saveState(); }
+        });
+      });
+    });
+    container.querySelectorAll('[data-remove-schedule]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.schedule = state.schedule.filter(r => r.id !== btn.dataset.removeSchedule);
+        saveState();
+        renderScheduleRows();
+      });
+    });
+  }
+
+  function renderExamRows() {
+    const container = document.getElementById('exam-rows');
+    container.innerHTML = state.exams.map(row => `
+      <div class="grid grid-cols-[1.3fr_1fr_0.9fr_1fr_36px] gap-2 items-center" data-row-id="${row.id}">
+        <input data-field="course" type="text" placeholder="اسم المادة" value="${escapeHTML(row.course)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <input data-field="date" type="date" value="${escapeHTML(row.date)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <input data-field="time" type="text" placeholder="9:00 ص" value="${escapeHTML(row.time)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <input data-field="room" type="text" placeholder="القاعة" value="${escapeHTML(row.room)}" class="w-full bg-surface border border-slate-200 rounded-lg px-2.5 py-2 text-xs focus:border-accent outline-none">
+        <button data-remove-exam="${row.id}" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    `).join('') || `<p class="text-xs text-slate-300 font-display text-center py-4">لا توجد امتحانات مضافة بعد</p>`;
+
+    container.querySelectorAll('[data-row-id]').forEach(rowEl => {
+      const id = rowEl.dataset.rowId;
+      rowEl.querySelectorAll('[data-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          const row = state.exams.find(r => r.id === id);
+          if (row) { row[input.dataset.field] = input.value; saveState(); }
+        });
+      });
+    });
+    container.querySelectorAll('[data-remove-exam]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.exams = state.exams.filter(r => r.id !== btn.dataset.removeExam);
+        saveState();
+        renderExamRows();
+      });
+    });
+  }
+
+  document.getElementById('add-schedule-row').addEventListener('click', () => {
+    state.schedule.push({ id: cryptoId(), day: 'الأحد', time: '', course: '', room: '' });
+    saveState();
+    renderScheduleRows();
+  });
+
+  document.getElementById('add-exam-row').addEventListener('click', () => {
+    state.exams.push({ id: cryptoId(), course: '', date: '', time: '', room: '' });
+    saveState();
+    renderExamRows();
+  });
+
+  /* =====================================================================
+     INIT
+  ===================================================================== */
+  loadState();
+  renderBoard();
+  renderCanvas();
+  renderScheduleRows();
+  renderExamRows();
+</script>
+
+</body>
+</html>

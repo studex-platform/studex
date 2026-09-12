@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الفرص والدورات | StudeX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: { DEFAULT: '#0F172A', soft: '#1E293B' },
+          accent: { DEFAULT: '#3B82F6', light: '#60A5FA', dim: '#2563EB' },
+          surface: '#F8FAFC',
+        },
+        fontFamily: {
+          display: ['Cairo', 'sans-serif'],
+          body: ['Tajawal', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Tajawal', sans-serif; background: #F8FAFC; }
+  h1, h2, h3, h4, .font-display { font-family: 'Cairo', sans-serif; }
+
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 0;
+    width: 0%;
+    height: 2px;
+    background: #3B82F6;
+    transition: width 0.25s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+  .nav-link.active { color: #0F172A; font-weight: 700; }
+  .nav-link.active::after { width: 100%; }
+
+  #mobile-menu { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  #mobile-menu.open { max-height: 480px; }
+
+  .section-tab { transition: all 0.25s ease; }
+  .section-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
+  .section-tab:not(.active) { color: #64748B; }
+
+  .master-card { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; cursor: pointer; }
+  .master-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px -10px rgba(15,23,42,0.14); }
+
+  .student-panel { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.5s ease, opacity 0.4s ease; }
+  .student-panel.open { max-height: 1200px; opacity: 1; }
+
+  .chevron { transition: transform 0.3s ease; }
+  .chevron.rotated { transform: rotate(180deg); }
+
+  #items-modal-backdrop, #detail-modal-backdrop {
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  #items-modal-backdrop.show, #detail-modal-backdrop.show { opacity: 1; pointer-events: auto; }
+  #items-modal-panel, #detail-modal-panel {
+    transform: translateY(16px) scale(0.98); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #items-modal-backdrop.show #items-modal-panel,
+  #detail-modal-backdrop.show #detail-modal-panel { transform: translateY(0) scale(1); opacity: 1; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  ::selection { background: #3B82F6; color: white; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="text-navy antialiased">
+
+<!-- ============ NAVBAR ============ -->
+<header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8">
+    <div class="flex items-center justify-between h-[72px]">
+
+      <a href="index.html" class="flex items-center shrink-0">
+        <span class="font-display font-extrabold text-2xl tracking-tight">
+          <span class="text-navy">Stude</span><span class="text-red-600">X</span>
+        </span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-8 font-display font-medium text-[15px] text-slate-600">
+        <a href="index.html" class="nav-link hover:text-navy transition-colors">الرئيسية</a>
+        <a href="index.html#tools" class="nav-link hover:text-navy transition-colors">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="nav-link active">الفرص والدورات</a>
+        <a href="index.html#community" class="nav-link hover:text-navy transition-colors">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="nav-link hover:text-navy transition-colors">المصادر الأكاديمية</a>
+        <a href="index.html#career" class="nav-link hover:text-navy transition-colors">التطوير المهني</a>
+      </nav>
+
+      <div class="hidden lg:flex items-center gap-3">
+        <button class="font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors px-3 py-2">
+          تسجيل الدخول
+        </button>
+        <button class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20">
+          لوحة التحكم
+        </button>
+      </div>
+
+      <button id="menu-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg text-navy" aria-label="فتح القائمة">
+        <svg id="icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg id="icon-close" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div id="mobile-menu" class="lg:hidden">
+      <nav class="flex flex-col gap-1 pb-5 font-display font-medium text-[15px] text-slate-600 border-t border-slate-100 pt-4">
+        <a href="index.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الرئيسية</a>
+        <a href="index.html#tools" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="py-2.5 px-2 rounded-lg bg-accent/5 text-accent font-bold">الفرص والدورات</a>
+        <a href="index.html#community" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
+        <a href="index.html#career" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
+        <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
+          <button class="font-display font-semibold text-sm text-slate-600 border border-slate-200 px-4 py-2.5 rounded-lg">تسجيل الدخول</button>
+          <button class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg">لوحة التحكم</button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ============ BREADCRUMB + TITLE ============ -->
+<section class="max-w-7xl mx-auto px-5 sm:px-8 pt-10 pb-6">
+  <div class="flex items-center gap-2 text-xs text-slate-400 font-display font-medium mb-4">
+    <a href="index.html" class="hover:text-accent transition-colors">الرئيسية</a>
+    <span>/</span>
+    <span class="text-slate-500">الفرص والدورات</span>
+  </div>
+
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shrink-0 mt-1">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="11" rx="1.5" stroke="#60A5FA" stroke-width="1.6"/><path d="M8 8V6.5C8 5.67157 8.67157 5 9.5 5H14.5C15.3284 5 16 5.67157 16 6.5V8" stroke="#3B82F6" stroke-width="1.6"/><path d="M4 12.5H20" stroke="#3B82F6" stroke-width="1.6"/></svg>
+    </div>
+    <div>
+      <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-navy">الفرص والدورات</h1>
+      <p class="text-slate-500 mt-2 text-sm sm:text-[15px] max-w-xl leading-relaxed">
+        اختر دورات لبناء مهاراتك، أو فرصاً لبناء مسيرتك المهنية — كل تصنيف يأخذك مباشرة إلى المصدر المناسب.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-7xl mx-auto px-5 sm:px-8 pb-24">
+
+  <!-- Top-level section tabs -->
+  <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm w-full sm:w-fit mb-8">
+    <button id="tab-courses" onclick="setSection('courses')" class="section-tab active font-display font-semibold text-sm px-6 py-2.5 rounded-xl flex-1 sm:flex-none flex items-center justify-center gap-2">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12.5L7 20L12 17.5L17 20L15.5 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      الدورات
+    </button>
+    <button id="tab-opportunities" onclick="setSection('opportunities')" class="section-tab font-display font-semibold text-sm px-6 py-2.5 rounded-xl flex-1 sm:flex-none flex items-center justify-center gap-2">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 4L20 8L12 12L4 8L12 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 10V14.5C7 14.5 9 17 12 17C15 17 17 14.5 17 14.5V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      الفرص
+    </button>
+  </div>
+
+  <!-- Courses section -->
+  <div id="section-courses">
+    <div id="courses-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+  </div>
+
+  <!-- Opportunities section -->
+  <div id="section-opportunities" class="hidden">
+    <div id="opportunities-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-4"></div>
+
+    <!-- Student Teams expandable panel -->
+    <div id="student-teams-panel" class="student-panel mt-2">
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        <div class="flex items-center gap-2.5 mb-6">
+          <span class="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="#F43F5E" stroke-width="1.6"/><path d="M3.5 19C3.5 15.5 6 13 9 13C12 13 14.5 15.5 14.5 19" stroke="#F43F5E" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8" r="2.3" stroke="#FB7185" stroke-width="1.5"/><path d="M15.5 13.2C18 13.6 20.5 15.5 20.5 19" stroke="#FB7185" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <h2 class="font-display font-bold text-lg text-navy">فرق طلابية ومؤتمرات وورشات عمل</h2>
+        </div>
+        <div id="student-teams-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ============ ITEMS LIST MODAL (card contents) ============ -->
+<div id="items-modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="items-modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white">
+      <h3 id="items-modal-title" class="font-display font-bold text-lg text-navy"></h3>
+      <button onclick="closeItemsModal()" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="items-modal-list" class="p-6 flex flex-col gap-3"></div>
+  </div>
+</div>
+
+<!-- ============ DETAIL MODAL (full paragraph + link button) ============ -->
+<div id="detail-modal-backdrop" class="fixed inset-0 z-[60] bg-navy/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="detail-modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white">
+      <h3 id="detail-modal-title" class="font-display font-bold text-lg text-navy"></h3>
+      <button onclick="closeDetailModal()" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-5">
+      <p id="detail-modal-paragraph" class="text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
+      <a id="detail-modal-link" href="#" target="_blank" rel="noopener" class="hidden w-fit inline-flex items-center gap-2 font-display font-bold text-sm bg-navy hover:bg-accent text-white px-5 py-3 rounded-xl transition-colors">
+        زيارة الرابط
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+    <!--
+      تحديث: تمت إزالة نسخة StudexStore المُدمجة يدوياً من هذا الملف. الآن
+      تُحمَّل من ملف studex-store.js الخارجي المشترك بين كل صفحات الموقع
+      (career.html و opportunities.html و academic-resources.html و
+      admin.html)، مع الاتصال بـ Firebase Firestore بدل localStorage، حتى
+      تظهر نفس البيانات لأي زائر من أي جهاز. تأكد أن هذه الملفات الأربعة
+      مرفوعة بجانب هذا الملف في نفس المجلد:
+        - firebase-config.js
+        - studex-store.js
+    -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="studex-store.js"></script>
+<script>
+  // ============ Mobile menu ============
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+  menuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('open');
+    iconOpen.classList.toggle('hidden');
+    iconClose.classList.toggle('hidden');
+  });
+
+  function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Escapes text for safe HTML rendering, then turns any bare URL into a
+  // clickable blue link that opens in a new tab (used for the item
+  // description text inside the items modal, so pasted links aren't just
+  // plain text). Inner links stop propagation so they don't also trigger
+  // the outer card's click-to-open behavior.
+  function linkifyHTML(str) {
+    if (!str) return '';
+    const escaped = escapeHTML(str);
+    const urlPattern = /(https?:\/\/[^\s<]+)/g;
+    return escaped.replace(urlPattern, (url) => {
+      // Trim common trailing punctuation that isn't part of the URL
+      let trail = '';
+      const trailMatch = url.match(/[).,;:!?]+$/);
+      if (trailMatch) {
+        trail = trailMatch[0];
+        url = url.slice(0, -trail.length);
+      }
+      return `<a href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-accent hover:text-accent-dim underline underline-offset-2 break-all">${url}</a>${trail}`;
+    });
+  }
+
+  /* =====================================================================
+     CONTENT SOURCE
+     Every card below is a "final card" in the admin hierarchy (الفرص
+     والدورات). Its published items (اسم + وصف مبسط + رابط خارجي/Drive)
+     are managed from admin.html and read here via StudexStore. Clicking
+     a card opens the items list; clicking an item opens its external
+     link directly in a new tab.
+  ===================================================================== */
+  const courseCategories = [
+    {
+      key: 'tech_courses',
+      title: 'دورات تقنية وبرمجة',
+      cta: 'استعراض الدورات',
+      badge: 'bg-violet-50 text-violet-600',
+      icon: `<path d="M8 9L4 12.5L8 16" stroke="#8B5CF6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 9L20 12.5L16 16" stroke="#8B5CF6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.5 6.5L10.5 18.5" stroke="#8B5CF6" stroke-width="1.6" stroke-linecap="round"/>`,
+      type: 'link',
+    },
+  ];
+
+  const opportunityCategories = [
+    {
+      key: 'scholarships',
+      title: 'منح دراسية',
+      cta: 'استعراض المنح',
+      badge: 'bg-emerald-50 text-emerald-600',
+      icon: `<path d="M12 4L20 8L12 12L4 8L12 4Z" stroke="#10B981" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 10V14.5C7 14.5 9 17 12 17C15 17 17 14.5 17 14.5V10" stroke="#10B981" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+      type: 'link',
+    },
+    {
+      key: 'internships',
+      title: 'فرص تدريب',
+      cta: 'استعراض الفرص',
+      badge: 'bg-sky-50 text-sky-600',
+      icon: `<rect x="4" y="8" width="16" height="11" rx="1.5" stroke="#0EA5E9" stroke-width="1.6"/><path d="M8 8V6.5C8 5.67157 8.67157 5 9.5 5H14.5C15.3284 5 16 5.67157 16 6.5V8" stroke="#0EA5E9" stroke-width="1.6"/><path d="M4 12.5H20" stroke="#0EA5E9" stroke-width="1.6"/>`,
+      type: 'link',
+    },
+    {
+      key: 'student_teams',
+      title: 'فرق طلابية ومؤتمرات وورشات عمل',
+      cta: 'استعراض الأنشطة والفعاليات',
+      badge: 'bg-rose-50 text-rose-600',
+      icon: `<circle cx="9" cy="8" r="3" stroke="#F43F5E" stroke-width="1.6"/><path d="M3.5 19C3.5 15.5 6 13 9 13C12 13 14.5 15.5 14.5 19" stroke="#F43F5E" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8" r="2.3" stroke="#FB7185" stroke-width="1.5"/><path d="M15.5 13.2C18 13.6 20.5 15.5 20.5 19" stroke="#FB7185" stroke-width="1.5" stroke-linecap="round"/>`,
+      type: 'expand',
+    },
+  ];
+
+  const studentTeamCategories = [
+    {
+      key: 'student_teams_list',
+      title: 'فرق طلابية',
+      cta: 'استعراض الفرق',
+      badge: 'bg-rose-50 text-rose-600',
+      icon: `<circle cx="9" cy="8" r="3" stroke="#F43F5E" stroke-width="1.6"/><path d="M3.5 19C3.5 15.5 6 13 9 13C12 13 14.5 15.5 14.5 19" stroke="#F43F5E" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8" r="2.3" stroke="#FB7185" stroke-width="1.5"/><path d="M15.5 13.2C18 13.6 20.5 15.5 20.5 19" stroke="#FB7185" stroke-width="1.5" stroke-linecap="round"/>`,
+    },
+    {
+      key: 'conferences',
+      title: 'مؤتمرات',
+      cta: 'استعراض المؤتمرات',
+      badge: 'bg-rose-50 text-rose-600',
+      icon: `<path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H18.5C19.3284 5 20 5.67157 20 6.5V15.5C20 16.3284 19.3284 17 18.5 17H8L4 20V6.5Z" stroke="#F43F5E" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 9.5H16M8 12.5H13" stroke="#F43F5E" stroke-width="1.6" stroke-linecap="round"/>`,
+    },
+    {
+      key: 'workshops',
+      title: 'ورشات عمل',
+      cta: 'استعراض الورشات',
+      badge: 'bg-rose-50 text-rose-600',
+      icon: `<path d="M6 20L10 12M10 12L14.5 4.5L18.5 6.5L14 14M10 12L14 14" stroke="#F43F5E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="17" r="3" stroke="#FB7185" stroke-width="1.6"/>`,
+    },
+  ];
+
+  function masterCardMarkup(cat) {
+    const isExpand = cat.type === 'expand';
+    const clickAction = isExpand ? `toggleStudentTeamsPanel()` : `openItemsModal('${cat.key}', '${escapeHTML(cat.title)}')`;
+    const ctaIcon = isExpand
+      ? `<svg class="chevron" id="chevron-${cat.key}" width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+      : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    // Count badge is rendered as an instant placeholder ("-") and filled in
+    // later in the background by refreshCounts() — the card itself never
+    // waits on a network/cache round trip to appear.
+    const countBadge = !isExpand
+      ? `<span id="count-${cat.key}" class="text-[10px] font-display font-bold text-slate-300">-</span>`
+      : '';
+
+    return `
+      <div class="master-card bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col justify-between" onclick="${clickAction}">
+        <div>
+          <div class="flex items-start justify-between gap-2 mb-4">
+            <span class="w-11 h-11 rounded-xl ${cat.badge} flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">${cat.icon}</svg>
+            </span>
+            ${countBadge}
+          </div>
+          <h3 class="font-display font-bold text-[15px] text-navy">${cat.title}</h3>
+        </div>
+        <div class="pt-5 mt-4 border-t border-slate-100">
+          <span class="inline-flex items-center gap-1.5 font-display font-bold text-xs text-accent">
+            ${cat.cta}
+            ${ctaIcon}
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  // Rendered instantly without waiting for network — mirrors
+  // academic-resources.html's pattern exactly.
+  function renderCards() {
+    document.getElementById('courses-cards').innerHTML = courseCategories.map(masterCardMarkup).join('');
+    document.getElementById('opportunities-cards').innerHTML = opportunityCategories.map(masterCardMarkup).join('');
+    document.getElementById('student-teams-cards').innerHTML = studentTeamCategories.map(masterCardMarkup).join('');
+  }
+
+  // Background fetch for counters without blocking page render
+  function refreshCounts() {
+    if (typeof StudexStore === 'undefined') {
+      console.error('[StudeX] StudexStore غير معرّف — لن تُعرض العدادات. تأكد أن studex-store.js تم تحميله بنجاح (تبويب Network) وأن اسم الملف مطابق تماماً لحالة الأحرف على GitHub Pages.');
+      return;
+    }
+    [...courseCategories, ...opportunityCategories, ...studentTeamCategories]
+      .filter(cat => cat.type !== 'expand')
+      .forEach(cat => {
+        StudexStore.getItems(cat.key).then(items => {
+          const el = document.getElementById(`count-${cat.key}`);
+          if (el) el.textContent = `${items.length} عنصر`;
+        }).catch(() => {});
+      });
+  }
+
+  /* =====================================================================
+     ITEMS MODAL — lists everything published under one card. Clicking
+     an item opens the internal detail modal (full paragraph + link
+     button), matching التطوير المهني's article/detail pattern.
+  ===================================================================== */
+  async function openItemsModal(cardKey, title) {
+    document.getElementById('items-modal-title').textContent = title;
+    const list = document.getElementById('items-modal-list');
+    list.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">جارِ التحميل...</p>`;
+    document.getElementById('items-modal-backdrop').classList.add('show');
+
+    const items = await StudexStore.getItems(cardKey);
+    list.innerHTML = items.length ? items.map(item => `
+      <button onclick="openDetailModal('${cardKey}','${item.id}')" class="text-right bg-surface border border-slate-200 hover:border-accent rounded-xl p-4 transition-colors">
+        <h4 class="font-display font-bold text-sm text-navy mb-1">${escapeHTML(item.title)}</h4>
+        <p class="text-xs text-slate-500 line-clamp-2">${escapeHTML(item.desc || '')}</p>
+      </button>
+    `).join('') : `<p class="text-sm text-slate-400 text-center py-6">لا توجد عناصر منشورة هنا بعد.</p>`;
+  }
+  function closeItemsModal() {
+    document.getElementById('items-modal-backdrop').classList.remove('show');
+  }
+  document.getElementById('items-modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'items-modal-backdrop') closeItemsModal();
+  });
+
+  /* =====================================================================
+     DETAIL MODAL — internal page showing the full paragraph + a button
+     to the external link (link is optional, exactly like التطوير المهني's
+     optional-video pattern).
+  ===================================================================== */
+  async function openDetailModal(cardKey, id) {
+    const item = await StudexStore.getItem(cardKey, id);
+    if (!item) return;
+    document.getElementById('detail-modal-title').textContent = item.title;
+    document.getElementById('detail-modal-paragraph').innerHTML = linkifyHTML(item.desc || '');
+
+    const linkBtn = document.getElementById('detail-modal-link');
+    if (item.link) {
+      linkBtn.href = item.link;
+      linkBtn.classList.remove('hidden');
+    } else {
+      linkBtn.removeAttribute('href');
+      linkBtn.classList.add('hidden');
+    }
+
+    document.getElementById('detail-modal-backdrop').classList.add('show');
+  }
+  function closeDetailModal() {
+    document.getElementById('detail-modal-backdrop').classList.remove('show');
+  }
+  document.getElementById('detail-modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-modal-backdrop') closeDetailModal();
+  });
+
+  function toggleStudentTeamsPanel() {
+    const panel = document.getElementById('student-teams-panel');
+    const willOpen = !panel.classList.contains('open');
+    panel.classList.toggle('open', willOpen);
+    const chevron = document.getElementById('chevron-student_teams');
+    if (chevron) chevron.classList.toggle('rotated', willOpen);
+    if (willOpen) {
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
+    }
+  }
+
+  /* =====================================================================
+     TOP-LEVEL SECTION TABS
+  ===================================================================== */
+  function setSection(section) {
+    document.getElementById('tab-courses').classList.toggle('active', section === 'courses');
+    document.getElementById('tab-opportunities').classList.toggle('active', section === 'opportunities');
+    document.getElementById('section-courses').classList.toggle('hidden', section !== 'courses');
+    document.getElementById('section-opportunities').classList.toggle('hidden', section !== 'opportunities');
+  }
+
+  /* =====================================================================
+     INIT
+  ===================================================================== */
+  // Rendered instantly without waiting for network
+  renderCards();
+  if (typeof StudexStore !== 'undefined' && StudexStore.ready) {
+    StudexStore.ready.then(refreshCounts);
+  } else {
+    console.error('[StudeX] StudexStore غير معرّف — لن تُعرض العدادات. تأكد أن studex-store.js تم تحميله بنجاح (تبويب Network) وأن اسم الملف مطابق تماماً لحالة الأحرف على GitHub Pages.');
+  }
+</script>
+
+</body>
+</html>

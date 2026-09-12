@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مجتمع الطلاب | StudeX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: { DEFAULT: '#0F172A', soft: '#1E293B' },
+          accent: { DEFAULT: '#3B82F6', light: '#60A5FA', dim: '#2563EB' },
+          surface: '#F8FAFC',
+        },
+        fontFamily: {
+          display: ['Cairo', 'sans-serif'],
+          body: ['Tajawal', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Tajawal', sans-serif; background: #F8FAFC; }
+  h1, h2, h3, h4, .font-display { font-family: 'Cairo', sans-serif; }
+
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 0;
+    width: 0%;
+    height: 2px;
+    background: #3B82F6;
+    transition: width 0.25s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+  .nav-link.active { color: #0F172A; font-weight: 700; }
+  .nav-link.active::after { width: 100%; }
+
+  #mobile-menu { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  #mobile-menu.open { max-height: 480px; }
+
+  .filter-pill { transition: all 0.2s ease; }
+  .filter-pill.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
+  .filter-pill:not(.active) { color: #64748B; }
+
+  .post-card { transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+  .post-card:hover { box-shadow: 0 12px 28px -12px rgba(15,23,42,0.12); }
+
+  select { -webkit-appearance: none; appearance: none; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 8px; height: 8px;
+    border-left: 1.6px solid #94A3B8;
+    border-bottom: 1.6px solid #94A3B8;
+    transform: translateY(-65%) rotate(-45deg);
+    pointer-events: none;
+  }
+
+  #modal-backdrop {
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  #modal-backdrop.show { opacity: 1; pointer-events: auto; }
+  #modal-panel {
+    transform: translateY(16px) scale(0.98); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #modal-backdrop.show #modal-panel { transform: translateY(0) scale(1); opacity: 1; }
+
+  .replies-panel { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s ease, opacity 0.3s ease; }
+  .replies-panel.open { max-height: 900px; opacity: 1; }
+
+  .like-btn.liked { color: #3B82F6; }
+  .like-btn.liked svg path { fill: #3B82F6; }
+
+  .chevron { transition: transform 0.3s ease; }
+  .chevron.rotated { transform: rotate(180deg); }
+
+  ::selection { background: #3B82F6; color: white; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="text-navy antialiased">
+
+<!-- ============ NAVBAR ============ -->
+<header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8">
+    <div class="flex items-center justify-between h-[72px]">
+
+      <a href="index.html" class="flex items-center shrink-0">
+        <span class="font-display font-extrabold text-2xl tracking-tight">
+          <span class="text-navy">Stude</span><span class="text-red-600">X</span>
+        </span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-8 font-display font-medium text-[15px] text-slate-600">
+        <a href="index.html" class="nav-link hover:text-navy transition-colors">الرئيسية</a>
+        <a href="index.html#tools" class="nav-link hover:text-navy transition-colors">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="nav-link hover:text-navy transition-colors">الفرص والدورات</a>
+        <a href="community.html" class="nav-link active">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="nav-link hover:text-navy transition-colors">المصادر الأكاديمية</a>
+        <a href="career.html" class="nav-link hover:text-navy transition-colors">التطوير المهني</a>
+      </nav>
+
+      <div class="hidden lg:flex items-center gap-3">
+        <button class="font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors px-3 py-2">
+          تسجيل الدخول
+        </button>
+        <button class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20">
+          لوحة التحكم
+        </button>
+      </div>
+
+      <button id="menu-btn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg text-navy" aria-label="فتح القائمة">
+        <svg id="icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg id="icon-close" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div id="mobile-menu" class="lg:hidden">
+      <nav class="flex flex-col gap-1 pb-5 font-display font-medium text-[15px] text-slate-600 border-t border-slate-100 pt-4">
+        <a href="index.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الرئيسية</a>
+        <a href="index.html#tools" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الفرص والدورات</a>
+        <a href="community.html" class="py-2.5 px-2 rounded-lg bg-accent/5 text-accent font-bold">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
+        <a href="career.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
+        <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
+          <button class="font-display font-semibold text-sm text-slate-600 border border-slate-200 px-4 py-2.5 rounded-lg">تسجيل الدخول</button>
+          <button class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg">لوحة التحكم</button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- ============ BREADCRUMB + TITLE ============ -->
+<section class="max-w-4xl mx-auto px-5 sm:px-8 pt-10 pb-6">
+  <div class="flex items-center gap-2 text-xs text-slate-400 font-display font-medium mb-4">
+    <a href="index.html" class="hover:text-accent transition-colors">الرئيسية</a>
+    <span>/</span>
+    <span class="text-slate-500">مجتمع الطلاب</span>
+  </div>
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shrink-0 mt-1">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 10.5H16M8 14H12.5" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round"/><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H18.5C19.3284 5 20 5.67157 20 6.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V6.5Z" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-navy">مجتمع الطلاب</h1>
+        <p class="text-slate-500 mt-2 text-sm sm:text-[15px] max-w-xl leading-relaxed">
+          اسأل، شارك تجربتك، أو ساعد طالباً آخر — مساحة الطلاب للطلاب.
+        </p>
+      </div>
+    </div>
+
+    <button onclick="openPostModal()" class="shrink-0 flex items-center justify-center gap-2 font-display font-bold text-sm bg-navy hover:bg-accent text-white px-5 py-3 rounded-xl transition-colors duration-300 shadow-lg shadow-navy/15">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      إضافة سؤال / منشور جديد
+    </button>
+  </div>
+</section>
+
+<!-- ============ COMMUNITY LINKS (Official Groups & Channels) ============ -->
+<section class="max-w-4xl mx-auto px-5 sm:px-8 pb-4">
+
+  <!-- Official main links -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+    <a href="https://wa.me/962000000000" target="_blank" rel="noopener"
+       class="group flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-emerald-300 transition-all">
+      <span class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="font-display font-bold text-navy text-[15px]">جروب واتساب StudeX الرئيسي</p>
+        <p class="text-slate-400 text-xs mt-0.5">إعلانات المنصة، الفرص، والنقاشات العامة</p>
+      </div>
+      <svg class="mr-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+
+    <a href="https://instagram.com/studex" target="_blank" rel="noopener"
+       class="group flex items-center gap-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-lg hover:border-pink-300 transition-all">
+      <span class="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center shrink-0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#DB2777" stroke-width="1.6"/><circle cx="12" cy="12" r="4" stroke="#DB2777" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1" fill="#DB2777"/></svg>
+      </span>
+      <div class="min-w-0">
+        <p class="font-display font-bold text-navy text-[15px]">صفحة انستغرام StudeX الرسمية</p>
+        <p class="text-slate-400 text-xs mt-0.5">تابع آخر الأخبار والمحتوى المرئي</p>
+      </div>
+      <svg class="mr-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="#DB2777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+
+  <!-- Batch & Major-specific WhatsApp groups -->
+  <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 mb-8">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div>
+        <h2 class="font-display font-bold text-navy text-base sm:text-lg">جروبات الواتساب حسب الدفعة والتخصص</h2>
+        <p class="text-slate-400 text-xs sm:text-[13px] mt-1">اختر دفعتك أو تخصصك للانضمام إلى الجروب المخصص لك</p>
+      </div>
+      <span class="shrink-0 text-[11px] font-display font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">قيد الإضافة</span>
+    </div>
+
+    <!-- Placeholder grid, ready for links per major/batch -->
+    <div id="major-groups-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+      <!-- 👇 جروب هندسة البرمجيات: استبدل href="#" برابط الواتساب الخاص بهذا التخصص -->
+      <a href="#" target="_blank" rel="noopener"
+         class="flex items-center gap-3 bg-surface border border-slate-200 rounded-xl p-3.5 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors">
+        <span class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="font-display font-semibold text-sm text-navy">هندسة البرمجيات</span>
+      </a>
+
+      <!-- 👇 جروب نظم المعلومات: استبدل href="#" برابط الواتساب الخاص بهذا التخصص -->
+      <a href="#" target="_blank" rel="noopener"
+         class="flex items-center gap-3 bg-surface border border-slate-200 rounded-xl p-3.5 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors">
+        <span class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="font-display font-semibold text-sm text-navy">نظم المعلومات</span>
+      </a>
+
+      <!-- 👇 جروب هندسة الحاسوب: استبدل href="#" برابط الواتساب الخاص بهذا التخصص -->
+      <a href="#" target="_blank" rel="noopener"
+         class="flex items-center gap-3 bg-surface border border-slate-200 rounded-xl p-3.5 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors">
+        <span class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="font-display font-semibold text-sm text-navy">هندسة الحاسوب</span>
+      </a>
+
+      <!-- 👇 جروب العلوم المالية: استبدل href="#" برابط الواتساب الخاص بهذا التخصص -->
+      <a href="#" target="_blank" rel="noopener"
+         class="flex items-center gap-3 bg-surface border border-slate-200 rounded-xl p-3.5 hover:border-emerald-300 hover:bg-emerald-50/40 transition-colors">
+        <span class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#059669" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="font-display font-semibold text-sm text-navy">العلوم المالية</span>
+      </a>
+
+      <!--
+        ℹ️ لإضافة تخصص جديد: انسخ إحدى البطاقات أعلاه بالكامل، غيّر اسم التخصص في آخر <span>،
+        وضع رابط جروب الواتساب الخاص به داخل href="..." بدلاً من "#".
+        مثال: href="https://chat.whatsapp.com/XXXXXXXXXXXXXXXX"
+      -->
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 mb-8">
+    <div class="h-px flex-1 bg-slate-200"></div>
+    <p class="font-display font-bold text-sm text-slate-400">لوحة النقاش والأسئلة</p>
+    <div class="h-px flex-1 bg-slate-200"></div>
+  </div>
+</section>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-4xl mx-auto px-5 sm:px-8 pb-24">
+
+  <!-- Category Filter Pills -->
+  <div class="flex flex-wrap items-center gap-2 mb-6">
+    <button onclick="setFilter('all')" data-filter="all" class="filter-pill active font-display font-semibold text-sm px-4 py-2.5 rounded-xl">الكل</button>
+    <button onclick="setFilter('courses')" data-filter="courses" class="filter-pill font-display font-semibold text-sm px-4 py-2.5 rounded-xl bg-white border border-slate-200">استفسارات المواد</button>
+    <button onclick="setFilter('experiences')" data-filter="experiences" class="filter-pill font-display font-semibold text-sm px-4 py-2.5 rounded-xl bg-white border border-slate-200">تجارب طلابية</button>
+  </div>
+
+  <!-- Feed -->
+  <div id="posts-feed" class="flex flex-col gap-4"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="hidden text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200 my-4">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="mx-auto mb-3 text-slate-300"><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H18.5C19.3284 5 20 5.67157 20 6.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V6.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <h3 class="font-display font-bold text-slate-700">لا توجد منشورات في هذا التصنيف بعد</h3>
+    <p class="text-slate-400 text-sm mt-1">كن أول من يبدأ النقاش!</p>
+  </div>
+</main>
+
+<!-- ============ NEW POST MODAL ============ -->
+<div id="modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100">
+      <h3 class="font-display font-bold text-lg text-navy">إضافة سؤال / منشور جديد</h3>
+      <button onclick="closePostModal()" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <form id="post-form" onsubmit="handleAddPost(event)" class="p-6 flex flex-col gap-5">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">الاسم المستعار (اختياري)</label>
+        <input type="text" id="post-author" placeholder="مثال: طالب هندسة برمجيات"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">التصنيف</label>
+        <div class="select-wrap">
+          <select id="post-category" class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+            <option value="courses">استفسارات المواد</option>
+            <option value="experiences">تجارب طلابية</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">العنوان</label>
+        <input type="text" id="post-title" required placeholder="مثال: هل مادة الشبكات صعبة مع د. سامر؟"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">التفاصيل</label>
+        <textarea id="post-content" required rows="4" placeholder="اكتب سؤالك أو شارك تجربتك بالتفصيل..."
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors resize-none"></textarea>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="button" onclick="closePostModal()" class="flex-1 font-display font-semibold text-sm text-slate-500 border border-slate-200 hover:bg-slate-50 px-5 py-3 rounded-xl transition-colors">
+          إلغاء
+        </button>
+        <button type="submit" class="flex-1 font-display font-bold text-sm bg-navy hover:bg-accent text-white px-5 py-3 rounded-xl transition-colors">
+          نشر
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // ============ Mobile menu ============
+  const menuBtn = document.getElementById('menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+  menuBtn.addEventListener('click', () => {
+    mobileMenu.classList.toggle('open');
+    iconOpen.classList.toggle('hidden');
+    iconClose.classList.toggle('hidden');
+  });
+
+  function escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+  function cryptoId() {
+    return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  /* =====================================================================
+     CATEGORY META
+  ===================================================================== */
+  const categoryMeta = {
+    courses:      { name: 'استفسارات المواد', badge: 'bg-blue-50 text-blue-600 border-blue-200' },
+    experiences:  { name: 'تجارب طلابية', badge: 'bg-amber-50 text-amber-600 border-amber-200' },
+  };
+
+  const avatarPalette = [
+    { bg: 'bg-blue-100', text: 'text-blue-600' },
+    { bg: 'bg-violet-100', text: 'text-violet-600' },
+    { bg: 'bg-emerald-100', text: 'text-emerald-600' },
+    { bg: 'bg-amber-100', text: 'text-amber-600' },
+    { bg: 'bg-rose-100', text: 'text-rose-600' },
+    { bg: 'bg-sky-100', text: 'text-sky-600' },
+  ];
+
+  function avatarStyleFor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return avatarPalette[Math.abs(hash) % avatarPalette.length];
+  }
+  function initialsFor(name) {
+    const trimmed = (name || 'طالب').trim();
+    return trimmed.charAt(0);
+  }
+  function formatRelativeTime(ts) {
+    const diffMs = Date.now() - ts;
+    const min = Math.floor(diffMs / 60000);
+    if (min < 1) return 'الآن';
+    if (min < 60) return `منذ ${min} دقيقة`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `منذ ${hr} ساعة`;
+    const day = Math.floor(hr / 24);
+    return `منذ ${day} يوم`;
+  }
+
+  /* =====================================================================
+     STATE / STORAGE
+  ===================================================================== */
+  const STORAGE_KEY = 'studex_community_posts_v1';
+  let posts = [];
+  let currentFilter = 'all';
+
+  function seedPosts() {
+    const now = Date.now();
+    return [
+      {
+        id: cryptoId(), author: 'طالب هندسة برمجيات', category: 'courses',
+        title: 'هل مادة هيكلة البيانات صعبة الفصل هذا؟',
+        content: 'حابب أعرف تجارب الطلاب اللي أخذوا المادة الفصل الماضي، وشو أفضل طريقة للمذاكرة قبل الامتحان النهائي.',
+        createdAt: now - 2 * 3600 * 1000, likes: 6, liked: false,
+        replies: [
+          { id: cryptoId(), author: 'طالبة علوم حاسوب', content: 'المادة متوسطة الصعوبة، بس لازم تحل تمارين كل أسبوع أول بأول.', createdAt: now - 1.5 * 3600 * 1000 },
+        ],
+      },
+      {
+        id: cryptoId(), author: 'طالبة نظم معلومات', category: 'courses',
+        title: 'أسلوب تدريس د. سامر في مادة الشبكات',
+        content: 'حد أخذ معه قبل؟ حابب أعرف شو أسلوب الامتحانات عنده وهل السلايدات كافية للمذاكرة.',
+        createdAt: now - 5 * 3600 * 1000, likes: 3, liked: false,
+        replies: [],
+      },
+      {
+        id: cryptoId(), author: 'طالب هندسة حاسوب', category: 'experiences',
+        title: 'تجربتي بالتدريب الصيفي في شركة تقنية محلية',
+        content: 'قضيت تدريب صيفي مدته شهرين، وحابب أشارك أهم الدروس اللي تعلمتها لأي طالب ناوي يقدم على تدريب مشابه.',
+        createdAt: now - 26 * 3600 * 1000, likes: 14, liked: false,
+        replies: [
+          { id: cryptoId(), author: 'طالبة هندسة برمجيات', content: 'شكراً على المشاركة! ممكن تفاصيل أكثر عن طريقة التقديم؟', createdAt: now - 20 * 3600 * 1000 },
+          { id: cryptoId(), author: 'طالب أنظمة معلومات', content: 'استفدت كتير من هالبوست 🙏', createdAt: now - 10 * 3600 * 1000 },
+        ],
+      },
+    ];
+  }
+
+  function loadPosts() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      posts = raw ? JSON.parse(raw) : seedPosts();
+      if (!raw) savePosts();
+    } catch (e) {
+      console.warn('تعذر تحميل منشورات المجتمع', e);
+      posts = seedPosts();
+    }
+  }
+  function savePosts() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
+    catch (e) { console.warn('تعذر حفظ منشورات المجتمع', e); }
+  }
+
+  /* =====================================================================
+     FILTER
+  ===================================================================== */
+  function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    renderFeed();
+  }
+
+  /* =====================================================================
+     RENDER
+  ===================================================================== */
+  function renderFeed() {
+    const feed = document.getElementById('posts-feed');
+    const emptyState = document.getElementById('empty-state');
+
+    const filtered = posts
+      .filter(p => currentFilter === 'all' || p.category === currentFilter)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    if (filtered.length === 0) {
+      feed.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+    feed.innerHTML = filtered.map(postCardHTML).join('');
+  }
+
+  function postCardHTML(post) {
+    const meta = categoryMeta[post.category] || categoryMeta.courses;
+    const avatar = avatarStyleFor(post.author);
+    const repliesOpen = post._repliesOpen ? 'open' : '';
+    const chevronRotated = post._repliesOpen ? 'rotated' : '';
+
+    return `
+      <article class="post-card bg-white border border-slate-200 rounded-2xl shadow-sm p-5 sm:p-6" data-post-id="${post.id}">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 rounded-full ${avatar.bg} ${avatar.text} flex items-center justify-center font-display font-bold text-sm shrink-0">
+              ${initialsFor(post.author)}
+            </span>
+            <div>
+              <p class="font-display font-semibold text-sm text-navy">${escapeHTML(post.author)}</p>
+              <p class="text-xs text-slate-400">${formatRelativeTime(post.createdAt)}</p>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 text-xs font-display font-semibold rounded-full border ${meta.badge} shrink-0">${meta.name}</span>
+        </div>
+
+        <h3 class="font-display font-bold text-[15px] sm:text-base text-navy mb-1.5">${escapeHTML(post.title)}</h3>
+        <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(post.content)}</p>
+
+        <div class="flex items-center gap-5 mt-4 pt-4 border-t border-slate-100">
+          <button onclick="toggleLike('${post.id}')" class="like-btn ${post.liked ? 'liked' : ''} flex items-center gap-1.5 text-slate-500 hover:text-accent transition-colors">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M7 11V20M3 13V18C3 19.1046 3.89543 20 5 20H15.4262C16.4123 20 17.2525 19.2879 17.4037 18.3138L18.4037 11.3138C18.5924 10.0957 17.6493 9 16.4262 9H14C13.4477 9 13 8.55228 13 8V5.5C13 4.11929 11.8807 3 10.5 3C10.2239 3 10 3.22386 10 3.5V4.5C10 6.5 8.5 8 7 9L7 11" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span class="font-display font-semibold text-xs">${post.likes}</span>
+          </button>
+          <button onclick="toggleReplies('${post.id}')" class="flex items-center gap-1.5 text-slate-500 hover:text-accent transition-colors">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H18.5C19.3284 5 20 5.67157 20 6.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V6.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span class="font-display font-semibold text-xs">${post.replies.length} إجابة</span>
+            <svg class="chevron ${chevronRotated}" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="replies-panel ${repliesOpen}">
+          <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
+            ${post.replies.map(replyHTML).join('') || `<p class="text-xs text-slate-300 font-display text-center py-2">لا توجد إجابات بعد، كن أول من يجيب</p>`}
+
+            <form onsubmit="handleAddReply(event, '${post.id}')" class="flex items-center gap-2 mt-1">
+              <input type="text" required placeholder="اكتب إجابتك أو تعليقك..."
+                class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+              <button type="submit" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function replyHTML(reply) {
+    const avatar = avatarStyleFor(reply.author);
+    return `
+      <div class="flex items-start gap-2.5">
+        <span class="w-8 h-8 rounded-full ${avatar.bg} ${avatar.text} flex items-center justify-center font-display font-bold text-xs shrink-0">
+          ${initialsFor(reply.author)}
+        </span>
+        <div class="bg-surface rounded-xl px-3.5 py-2.5 flex-1">
+          <div class="flex items-center justify-between gap-2 mb-0.5">
+            <p class="font-display font-semibold text-xs text-navy">${escapeHTML(reply.author)}</p>
+            <p class="text-[11px] text-slate-400">${formatRelativeTime(reply.createdAt)}</p>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(reply.content)}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  /* =====================================================================
+     ACTIONS
+  ===================================================================== */
+  function toggleLike(id) {
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    post.liked = !post.liked;
+    post.likes += post.liked ? 1 : -1;
+    savePosts();
+    renderFeed();
+  }
+
+  function toggleReplies(id) {
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    post._repliesOpen = !post._repliesOpen;
+    renderFeed();
+  }
+
+  function handleAddReply(e, postId) {
+    e.preventDefault();
+    const input = e.target.querySelector('input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    post.replies.push({ id: cryptoId(), author: 'أنت', content, createdAt: Date.now() });
+    post._repliesOpen = true;
+    savePosts();
+    renderFeed();
+  }
+
+  /* =====================================================================
+     NEW POST MODAL
+  ===================================================================== */
+  function openPostModal() { document.getElementById('modal-backdrop').classList.add('show'); }
+  function closePostModal() {
+    document.getElementById('modal-backdrop').classList.remove('show');
+    document.getElementById('post-form').reset();
+  }
+  document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-backdrop') closePostModal();
+  });
+
+  function handleAddPost(e) {
+    e.preventDefault();
+    const newPost = {
+      id: cryptoId(),
+      author: document.getElementById('post-author').value.trim() || 'طالب مجهول',
+      category: document.getElementById('post-category').value,
+      title: document.getElementById('post-title').value.trim(),
+      content: document.getElementById('post-content').value.trim(),
+      createdAt: Date.now(),
+      likes: 0,
+      liked: false,
+      replies: [],
+    };
+    posts.unshift(newPost);
+    savePosts();
+    setFilter('all');
+    closePostModal();
+  }
+
+  /* =====================================================================
+     INIT
+  ===================================================================== */
+  loadPosts();
+  renderFeed();
+</script>
+
+<script type="module" src="firebase-config.js"></script>
+
+</body>
+</html>

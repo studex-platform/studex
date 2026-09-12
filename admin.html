@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudeX - لوحة التحكم (Admin Dashboard)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 800: '#0f172a', 900: '#020617' },
+                        accent: { DEFAULT: '#2563eb', hover: '#1d4ed8' }
+                    },
+                    fontFamily: { sans: ['Tajawal', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        select { background-image: none; }
+        .field-group { display: none; }
+        .field-group.active { display: block; }
+        .mode-toggle { transition: all .15s ease; }
+        .mode-toggle.active { background: #0f172a; color: #fff; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <script>
+        (function () {
+            var ADMIN_PASSWORD = "studex2026"; // يمكن تغييرها لاحقاً
+            var SESSION_KEY = "studex_admin_authed";
+
+            function isAuthed() {
+                return sessionStorage.getItem(SESSION_KEY) === "true";
+            }
+
+            function requestAccess() {
+                var attempts = 0;
+                while (!isAuthed() && attempts < 3) {
+                    var input = window.prompt("🔒 لوحة تحكم StudeX محمية\nيرجى إدخال كلمة المرور للمتابعة:");
+                    if (input === null) {
+                        // المستخدم ضغط إلغاء -> إعادة توجيه لصفحة الموقع الرئيسية
+                        window.location.replace("index.html");
+                        return;
+                    }
+                    if (input === ADMIN_PASSWORD) {
+                        sessionStorage.setItem(SESSION_KEY, "true");
+                        return;
+                    }
+                    attempts++;
+                    if (attempts < 3) {
+                        window.alert("❌ كلمة المرور غير صحيحة. حاول مرة أخرى.");
+                    }
+                }
+                if (!isAuthed()) {
+                    window.alert("❌ فشلت المحاولات. سيتم إعادة توجيهك للصفحة الرئيسية.");
+                    window.location.replace("index.html");
+                }
+            }
+
+            if (!isAuthed()) {
+                document.documentElement.style.visibility = "hidden";
+                requestAccess();
+                if (isAuthed()) {
+                    document.documentElement.style.visibility = "visible";
+                }
+            }
+        })();
+    </script>
+
+    <!-- Header -->
+    <header class="bg-navy-900 text-white border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-accent text-white font-bold rounded-xl flex items-center justify-center text-xl shadow">S</div>
+                <div>
+                    <h1 class="text-lg font-bold">لوحة إدارة منصة StudeX</h1>
+                    <p class="text-xs text-slate-400">إدارة الفرص، المصادر، والمنشورات</p>
+                </div>
+            </div>
+            <a href="index.html" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition-colors">العودة للموقع</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- ============ ADD / EDIT CONTENT FORM ============ -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 h-fit lg:sticky lg:top-6">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h2 id="formTitle" class="font-bold text-lg text-navy-900">إضافة محتوى جديد</h2>
+                <button id="cancelEditBtn" onclick="resetForm()" class="hidden text-xs text-rose-500 font-semibold">إلغاء التعديل</button>
+            </div>
+
+            <!-- Step 1: hierarchy -->
+            <div class="space-y-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                <p class="text-[11px] font-bold text-slate-400 tracking-wide">مسار الإدخال الهرمي</p>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">1. القسم الرئيسي</label>
+                    <select id="sectionSelect" onchange="onSectionChange()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">2. التبويب / التصنيف الفرعي</label>
+                    <select id="subTabSelect" onchange="onSubTabChange()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">3. البطاقة النهائية</label>
+                    <select id="cardSelect" onchange="onCardChange()" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></select>
+                </div>
+
+                <p id="modeHint" class="text-[11px] text-slate-400 leading-relaxed pt-1"></p>
+            </div>
+
+            <!-- Step 2: mode toggle -->
+            <div id="flexModeGroup" class="field-group">
+                <label class="block text-xs font-medium text-slate-600 mb-1.5">نوع المحتوى لهذا العنصر</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="modeBtnDrive" onclick="setFlexMode('drive')" class="mode-toggle active border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-600">رابط خارجي / Drive</button>
+                    <button type="button" id="modeBtnText" onclick="setFlexMode('text')" class="mode-toggle border border-slate-200 rounded-xl py-2 text-xs font-bold text-slate-600">نص معلوماتي</button>
+                </div>
+            </div>
+
+            <!-- Step 3: dynamic fields -->
+            <div class="space-y-3">
+
+                <!-- shared title field -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1" id="titleLabel">العنوان</label>
+                    <input type="text" id="fieldTitle" placeholder="مثال: ورشة عمل الذكاء الاصطناعي" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+
+                <!-- entryMode = article -> Youtube is OPTIONAL -->
+                <div id="group-article" class="field-group space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">الفقرة النصية</label>
+                        <textarea id="fieldParagraph" rows="4" placeholder="اكتب الشرح الذي سيظهر داخل صفحة الموقع..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">رابط فيديو يوتيوب (اختياري)</label>
+                        <input type="url" id="fieldYoutube" placeholder="https://youtube.com/watch?v=..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    </div>
+                    <p class="text-[11px] text-slate-400">رابط الفيديو اختياري تماماً.</p>
+                </div>
+
+                <!-- entryMode = link-list -->
+                <div id="group-linklist" class="field-group space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">الفقرة النصية (وصف الفرصة أو الدورة وفائدتها)</label>
+                        <textarea id="fieldDescLL" rows="6" placeholder="اكتب وصفاً تفصيلياً ومريحاً عن الفرصة أو الدورة، الفائدة منها، ومتطلبات الالتحاق إن وجدت..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">الرابط الخارجي (أو Drive) <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="url" id="fieldLinkLL" placeholder="https://..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    </div>
+                    <p class="text-[11px] text-slate-400">الرابط اختياري تماماً. عند النقر على العنصر في الموقع تُفتح نافذة داخلية تعرض الفقرة النصية كاملة، ومعها زر لزيارة هذا الرابط في تبويب جديد إن تمت تعبئته.</p>
+                </div>
+
+                <!-- entryMode = flexible / drive -->
+                <div id="group-flex-drive" class="field-group space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">وصف مختصر (اختياري)</label>
+                        <input type="text" id="fieldDescFD" placeholder="مثال: سلايدات مرتبة حسب المادة، أو أسئلة سنة سابقة لمادة الدوائر" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">رابط Google Drive / رابط خارجي <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                        <input type="url" id="fieldLinkFD" placeholder="https://drive.google.com/..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    </div>
+                    <p class="text-[11px] text-slate-400">الرابط اختياري تماماً. إن تمت تعبئته سيظهر كزر ورابط أزرق تفاعلي يفتح مباشرة في تبويب جديد.</p>
+                </div>
+
+                <!-- entryMode = flexible / text -->
+                <div id="group-flex-text" class="field-group space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">النص المعلوماتي</label>
+                        <textarea id="fieldBodyFT" rows="5" placeholder="مثال: قائمة إيميلات الدكاترة أو شرح أداة AI..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></textarea>
+                    </div>
+                </div>
+
+                <button id="publishBtn" onclick="publish()" class="w-full bg-navy-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow">نشر المحتوى</button>
+            </div>
+        </div>
+
+        <!-- ============ STATS + MANAGEMENT ============ -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Quick Stats -->
+            <div id="statsRow" class="grid grid-cols-3 gap-4"></div>
+
+            <!-- Filter -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2 items-center">
+                <span class="text-xs font-bold text-slate-500 ml-1">تصفية:</span>
+                <button data-filter="all" onclick="setFilter('all')" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200">الكل</button>
+                <button data-filter="career" onclick="setFilter('career')" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200">التطوير المهني</button>
+                <button data-filter="opportunities" onclick="setFilter('opportunities')" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200">الفرص والدورات</button>
+                <button data-filter="academic" onclick="setFilter('academic')" class="filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200">المصادر الأكاديمية</button>
+            </div>
+
+            <!-- Content list grouped by hierarchy -->
+            <div id="contentList" class="space-y-5"></div>
+
+            <!-- Manage Community Posts -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 class="font-bold text-navy-900">إدارة منشورات المنتدى</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
+                        <div>
+                            <span class="font-semibold text-slate-800 block">كيف طبيعة أسئلة الفاينل لمادة الدوائر؟</span>
+                            <span class="text-xs text-slate-400">بواسطة: طالب هندسة</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold">قبول</button>
+                            <button class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Firebase Firestore (نسخة compat) — يجب أن تُحمَّل قبل studex-store.js.
+         تأكد أن firebase-config.js و studex-store.js مرفوعان بجانب admin.html. -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="studex-store.js"></script>
+    <script>
+        const SECTIONS = StudexStore.SECTIONS;
+        let currentFilter = 'all';
+        let flexMode = 'drive';
+        let editing = null;
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        /* ================= HIERARCHY SELECTS ================= */
+        function populateSectionSelect() {
+            const sel = document.getElementById('sectionSelect');
+            sel.innerHTML = Object.keys(SECTIONS).map(key =>
+                `<option value="${key}">${SECTIONS[key].label}</option>`).join('');
+        }
+
+        function populateSubTabSelect() {
+            const sectionKey = document.getElementById('sectionSelect').value;
+            const sel = document.getElementById('subTabSelect');
+            const subTabs = SECTIONS[sectionKey].subTabs;
+            sel.innerHTML = Object.keys(subTabs).map(key =>
+                `<option value="${key}">${subTabs[key].label}</option>`).join('');
+        }
+
+        function populateCardSelect() {
+            const sectionKey = document.getElementById('sectionSelect').value;
+            const subTabKey = document.getElementById('subTabSelect').value;
+            const sel = document.getElementById('cardSelect');
+            const cards = SECTIONS[sectionKey].subTabs[subTabKey].cards;
+            sel.innerHTML = cards.map(c => `<option value="${c.key}">${c.label}</option>`).join('');
+        }
+
+        function onSectionChange() {
+            populateSubTabSelect();
+            populateCardSelect();
+            onCardChange();
+        }
+        function onSubTabChange() {
+            populateCardSelect();
+            onCardChange();
+        }
+        function onCardChange() {
+            const sectionKey = document.getElementById('sectionSelect').value;
+            const entryMode = SECTIONS[sectionKey].entryMode;
+            applyEntryMode(entryMode);
+        }
+
+        function applyEntryMode(entryMode) {
+            document.querySelectorAll('.field-group').forEach(el => el.classList.remove('active'));
+            const titleLabel = document.getElementById('titleLabel');
+            const hint = document.getElementById('modeHint');
+
+            if (entryMode === 'article') {
+                document.getElementById('group-article').classList.add('active');
+                titleLabel.textContent = 'العنوان';
+                hint.textContent = 'قسم "التطوير المهني": فقرة نصية + رابط فيديو اختياري.';
+            } else if (entryMode === 'link-list') {
+                document.getElementById('group-linklist').classList.add('active');
+                titleLabel.textContent = 'اسم الفرصة أو الكورس';
+                hint.textContent = 'قسم "الفرص والدورات": اسم + فقرة نصية تفصيلية تُعرض كاملة داخل نافذة منبثقة عند فتح العنصر في الموقع، والرابط الخارجي اختياري ويظهر كزر داخل نفس النافذة.';
+            } else if (entryMode === 'flexible') {
+                document.getElementById('flexModeGroup').classList.add('active');
+                titleLabel.textContent = 'العنوان';
+                hint.textContent = 'قسم "المصادر الأكاديمية": اختر إن كان المحتوى رابطاً أزرق تفاعلياً (سلايدات، أسئلة سنوات سابقة، إيميل دكتور...) أو نصاً معلوماتياً. بطاقة "مصادر المواد والسلايدات وأسئلة السنوات" أصبحت بطاقة واحدة موحّدة تجمع كل هذا المحتوى.';
+                applyFlexMode();
+            }
+        }
+
+        function setFlexMode(mode) {
+            flexMode = mode;
+            document.getElementById('modeBtnDrive').classList.toggle('active', mode === 'drive');
+            document.getElementById('modeBtnText').classList.toggle('active', mode === 'text');
+            applyFlexMode();
+        }
+
+        function applyFlexMode() {
+            document.getElementById('group-flex-drive').classList.toggle('active', flexMode === 'drive');
+            document.getElementById('group-flex-text').classList.toggle('active', flexMode === 'text');
+        }
+
+        /* ================= PUBLISH / SAVE ================= */
+        function currentSelection() {
+            return {
+                sectionKey: document.getElementById('sectionSelect').value,
+                subTabKey: document.getElementById('subTabSelect').value,
+                cardKey: document.getElementById('cardSelect').value,
+            };
+        }
+
+        function buildPayload(entryMode) {
+            const title = document.getElementById('fieldTitle').value.trim();
+            if (!title) { alert('الرجاء إدخال العنوان.'); return null; }
+
+            if (entryMode === 'article') {
+                const paragraph = document.getElementById('fieldParagraph').value.trim();
+                const youtube = document.getElementById('fieldYoutube').value.trim(); // Optional!
+                if (!paragraph) { alert('الرجاء إدخال الفقرة النصية.'); return null; }
+                return { kind: 'article', title, paragraph, youtube };
+            }
+            if (entryMode === 'link-list') {
+                const desc = document.getElementById('fieldDescLL').value.trim();
+                const link = document.getElementById('fieldLinkLL').value.trim(); // Optional!
+                if (!desc) { alert('الرجاء إدخال الفقرة النصية.'); return null; }
+                return { kind: 'link', title, desc, link };
+            }
+            if (entryMode === 'flexible') {
+                if (flexMode === 'drive') {
+                    const desc = document.getElementById('fieldDescFD').value.trim();
+                    const link = document.getElementById('fieldLinkFD').value.trim(); // Optional!
+                    return { kind: 'drive', title, desc, link };
+                } else {
+                    const body = document.getElementById('fieldBodyFT').value.trim();
+                    if (!body) { alert('الرجاء إدخال النص المعلوماتي.'); return null; }
+                    return { kind: 'text', title, body };
+                }
+            }
+            return null;
+        }
+
+        async function publish() {
+            const { sectionKey, cardKey } = currentSelection();
+            const entryMode = SECTIONS[sectionKey].entryMode;
+            const payload = buildPayload(entryMode);
+            if (!payload) return;
+
+            const publishBtn = document.getElementById('publishBtn');
+            publishBtn.disabled = true;
+            publishBtn.textContent = 'جارِ النشر...';
+
+            try {
+                if (editing && editing.cardKey === cardKey) {
+                    await StudexStore.updateItem(cardKey, editing.id, payload);
+                } else if (editing) {
+                    await StudexStore.moveItem(editing.cardKey, cardKey, editing.id, payload);
+                } else {
+                    await StudexStore.addItem(cardKey, payload);
+                }
+
+                alert('تم نشر المحتوى بنجاح!');
+                resetForm(); // يعيد ضبط نص الزر إلى "نشر المحتوى"
+                await renderAll();
+            } catch (e) {
+                console.error('فشل نشر المحتوى', e);
+                alert('تعذر نشر المحتوى. تحقق من اتصال الإنترنت أو Firestore Security Rules، ثم حاول مرة أخرى.');
+                publishBtn.textContent = editing ? 'حفظ التعديلات' : 'نشر المحتوى';
+            } finally {
+                publishBtn.disabled = false;
+            }
+        }
+
+        function resetForm() {
+            editing = null;
+            document.getElementById('formTitle').textContent = 'إضافة محتوى جديد';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('publishBtn').textContent = 'نشر المحتوى';
+            ['fieldTitle','fieldParagraph','fieldYoutube','fieldDescLL','fieldLinkLL','fieldDescFD','fieldLinkFD','fieldBodyFT']
+                .forEach(id => document.getElementById(id).value = '');
+            document.getElementById('sectionSelect').selectedIndex = 0;
+            onSectionChange();
+            setFlexMode('drive');
+        }
+
+        async function editContent(cardKey, id) {
+            const meta = StudexStore.findCardMeta(cardKey);
+            const item = await StudexStore.getItem(cardKey, id);
+            if (!meta || !item) return;
+
+            editing = { cardKey, id };
+            document.getElementById('formTitle').textContent = 'تعديل المحتوى';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('publishBtn').textContent = 'حفظ التعديلات';
+
+            document.getElementById('sectionSelect').value = meta.sectionKey;
+            populateSubTabSelect();
+            document.getElementById('subTabSelect').value = meta.subTabKey;
+            populateCardSelect();
+            document.getElementById('cardSelect').value = meta.cardKey;
+            applyEntryMode(meta.entryMode);
+
+            document.getElementById('fieldTitle').value = item.title || '';
+
+            if (meta.entryMode === 'article') {
+                document.getElementById('fieldParagraph').value = item.paragraph || '';
+                document.getElementById('fieldYoutube').value = item.youtube || '';
+            } else if (meta.entryMode === 'link-list') {
+                document.getElementById('fieldDescLL').value = item.desc || '';
+                document.getElementById('fieldLinkLL').value = item.link || '';
+            } else if (meta.entryMode === 'flexible') {
+                setFlexMode(item.kind === 'text' ? 'text' : 'drive');
+                if (item.kind === 'text') {
+                    document.getElementById('fieldBodyFT').value = item.body || '';
+                } else {
+                    document.getElementById('fieldDescFD').value = item.desc || '';
+                    document.getElementById('fieldLinkFD').value = item.link || '';
+                }
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteContent(cardKey, id) {
+            if (!confirm('هل تريد حذف هذا العنصر؟')) return;
+            try {
+                await StudexStore.deleteItem(cardKey, id);
+                if (editing && editing.id === id) resetForm();
+                await renderAll();
+            } catch (e) {
+                console.error('فشل حذف العنصر', e);
+                alert('تعذر حذف العنصر، حاول مرة أخرى.');
+            }
+        }
+
+        /* ================= STATS ================= */
+        async function renderStats() {
+            const all = await StudexStore.loadAll();
+            let total = 0;
+            const perSection = { career: 0, opportunities: 0, academic: 0 };
+            Object.keys(all).forEach(cardKey => {
+                const meta = StudexStore.findCardMeta(cardKey);
+                const count = all[cardKey].length;
+                total += count;
+                if (meta) perSection[meta.sectionKey] = (perSection[meta.sectionKey] || 0) + count;
+            });
+
+            document.getElementById('statsRow').innerHTML = `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                    <span class="text-2xl font-bold text-navy-900 block">${total}</span>
+                    <span class="text-xs text-slate-500">إجمالي المنشورات</span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                    <span class="text-2xl font-bold text-accent block">${perSection.opportunities}</span>
+                    <span class="text-xs text-slate-500">الفرص والدورات</span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center">
+                    <span class="text-2xl font-bold text-emerald-600 block">${perSection.academic}</span>
+                    <span class="text-xs text-slate-500">المصادر الأكاديمية</span>
+                </div>
+            `;
+        }
+
+        /* ================= FILTER ================= */
+        function setFilter(f) {
+            currentFilter = f;
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                const active = btn.dataset.filter === f;
+                btn.classList.toggle('bg-navy-900', active);
+                btn.classList.toggle('text-white', active);
+                btn.classList.toggle('border-navy-900', active);
+                btn.classList.toggle('text-slate-500', !active);
+            });
+            return renderContentList();
+        }
+
+        /* ================= CONTENT LIST ================= */
+        const kindBadge = {
+            article: '<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold">مقال داخلي</span>',
+            link: '<span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-600 text-[10px] font-bold">رابط خارجي أزرق</span>',
+            drive: '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold">رابط خارجي أزرق</span>',
+            text: '<span class="px-2 py-0.5 rounded-md bg-violet-50 text-violet-600 text-[10px] font-bold">نص معلوماتي</span>',
+        };
+
+        async function renderContentList() {
+            const container = document.getElementById('contentList');
+            container.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-dashed border-slate-200 text-center text-sm text-slate-400">جارِ التحميل...</div>`;
+            const all = await StudexStore.loadAll();
+
+            const groups = {};
+            Object.keys(all).forEach(cardKey => {
+                if (!all[cardKey].length) return;
+                const meta = StudexStore.findCardMeta(cardKey);
+                if (!meta) return;
+                if (currentFilter !== 'all' && meta.sectionKey !== currentFilter) return;
+                groups[meta.sectionKey] = groups[meta.sectionKey] || { label: meta.sectionLabel, subs: {} };
+                groups[meta.sectionKey].subs[meta.subTabKey] = groups[meta.sectionKey].subs[meta.subTabKey] || { label: meta.subTabLabel, cards: {} };
+                groups[meta.sectionKey].subs[meta.subTabKey].cards[cardKey] = { label: meta.cardLabel, items: all[cardKey] };
+            });
+
+            if (!Object.keys(groups).length) {
+                container.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-dashed border-slate-200 text-center text-sm text-slate-400">لا يوجد محتوى منشور بعد ضمن هذا التصنيف.</div>`;
+                return;
+            }
+
+            container.innerHTML = Object.keys(groups).map(sectionKey => {
+                const section = groups[sectionKey];
+                const subsHTML = Object.keys(section.subs).map(subKey => {
+                    const sub = section.subs[subKey];
+                    const cardsHTML = Object.keys(sub.cards).map(cardKey => {
+                        const card = sub.cards[cardKey];
+                        const rows = card.items.map(item => `
+                            <div class="flex justify-between items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <span class="font-semibold text-slate-800">${escapeHTML(item.title)}</span>
+                                        ${(item.kind === 'link' || item.kind === 'drive') && !item.link
+                                            ? '<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-bold">بدون رابط</span>'
+                                            : (kindBadge[item.kind] || '')}
+                                    </div>
+                                    <p class="text-xs text-slate-400 truncate max-w-md">${escapeHTML(item.desc || item.paragraph || item.body || item.link || '')}</p>
+                                </div>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="editContent('${cardKey}','${item.id}')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200">تعديل</button>
+                                    <button onclick="deleteContent('${cardKey}','${item.id}')" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold hover:bg-rose-100">حذف</button>
+                                </div>
+                            </div>
+                        `).join('');
+                        return `
+                            <div class="mb-3">
+                                <p class="text-xs font-bold text-slate-400 mb-2">↳ ${card.label} <span class="text-slate-300">(${card.items.length})</span></p>
+                                <div class="space-y-2">${rows}</div>
+                            </div>
+                        `;
+                    }).join('');
+                    return `
+                        <div class="mb-4">
+                            <p class="text-sm font-bold text-navy-900 mb-2 border-b border-slate-100 pb-1.5">${sub.label}</p>
+                            ${cardsHTML}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-navy-900 mb-4">${section.label}</h3>
+                        ${subsHTML}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function renderAll() {
+            await Promise.all([renderStats(), renderContentList()]);
+        }
+
+        populateSectionSelect();
+        onSectionChange();
+        StudexStore.ready.then(() => {
+            renderStats();
+            setFilter('all'); // يستدعي renderContentList() داخلياً
+        });
+    </script>
+
+</body>
+</html>

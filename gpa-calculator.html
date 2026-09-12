@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة المعدل | النظام الجديد - الجامعة الأردنية - StudeX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: { DEFAULT: '#0F172A', soft: '#1E293B' },
+          accent: { DEFAULT: '#3B82F6', light: '#60A5FA', dim: '#2563EB' },
+          surface: '#F8FAFC',
+        },
+        fontFamily: {
+          display: ['Cairo', 'sans-serif'],
+          body: ['Tajawal', 'sans-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Tajawal', sans-serif; background: #F8FAFC; }
+  h1, h2, h3, h4, .font-display { font-family: 'Cairo', sans-serif; }
+
+  .grain-noise {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+
+  .mode-tab { transition: all 0.25s ease; }
+  .mode-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
+  .mode-tab:not(.active) { color: #64748B; }
+
+  .tool-tab { transition: all 0.25s ease; }
+  .tool-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
+  .tool-tab:not(.active) { color: #64748B; }
+
+  .toggle-pill { transition: all 0.25s ease; }
+  .toggle-pill.active { background: #3B82F6; color: #fff; }
+  .toggle-pill:not(.active) { color: #64748B; }
+
+  .course-row { animation: rowIn 0.35s ease; }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results-reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .results-reveal.show { opacity: 1; transform: translateY(0); }
+
+  select { -webkit-appearance: none; appearance: none; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    width: 8px; height: 8px;
+    border-left: 1.6px solid #94A3B8;
+    border-bottom: 1.6px solid #94A3B8;
+    transform: translateY(-65%) rotate(-45deg);
+    pointer-events: none;
+  }
+
+  ::selection { background: #3B82F6; color: white; }
+</style>
+</head>
+<body class="text-navy antialiased">
+
+<!-- ============ TOP BAR ============ -->
+<header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
+  <div class="max-w-5xl mx-auto px-5 sm:px-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 h-auto py-3 sm:h-[72px] sm:py-0">
+      <a href="index.html" class="flex items-center shrink-0">
+        <span class="font-display font-extrabold text-2xl tracking-tight">
+          <span class="text-navy">Stude</span><span class="text-red-600">X</span>
+        </span>
+      </a>
+
+      <div class="flex items-center gap-2 bg-surface border border-slate-200 rounded-2xl p-1.5 shadow-sm order-3 sm:order-none w-full sm:w-fit">
+        <a href="gpa-calculator.html" class="tool-tab active font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+          حاسبة المعدل
+        </a>
+        <a href="planning-board.html" class="tool-tab font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+          لوحة التخطيط
+        </a>
+      </div>
+
+      <a href="index.html" class="flex items-center gap-2 font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors shrink-0">
+        <span>عودة للرئيسية</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 12H7M7 12L11 16M7 12L11 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ============ BREADCRUMB + TITLE ============ -->
+<section class="max-w-5xl mx-auto px-5 sm:px-8 pt-10 pb-6">
+  <div class="flex items-center gap-2 text-xs text-slate-400 font-display font-medium mb-4">
+    <a href="index.html" class="hover:text-accent transition-colors">الرئيسية</a>
+    <span>/</span>
+    <a href="index.html#tools" class="hover:text-accent transition-colors">الأدوات التفاعلية</a>
+    <span>/</span>
+    <span class="text-slate-500">حاسبة المعدل</span>
+  </div>
+
+  <div class="flex items-start gap-4">
+    <div class="w-12 h-12 rounded-xl bg-navy flex items-center justify-center shrink-0 mt-1">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="#60A5FA" stroke-width="1.6"/><path d="M8.5 7.5H15.5" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 11H10.5M13.5 11H15.5M8.5 14.5H10.5M13.5 14.5H15.5M8.5 18H10.5M13.5 18H15.5" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <div class="flex flex-wrap items-center gap-3 mb-2">
+        <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-navy">حاسبة معدل الجامعة الأردنية</h1>
+        <span class="font-display font-semibold text-xs bg-accent/10 text-accent-dim border border-accent/20 px-3 py-1 rounded-full">نظام النقاط الجديد</span>
+      </div>
+      <p class="text-slate-500 text-sm sm:text-[15px] max-w-xl leading-relaxed">
+        احسب معدلك الفصلي أو معدلك التراكمي الجديد بدقة، وفق سلم علامات الجامعة الأردنية الرسمي - النظام الجديد فقط.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAIN CALCULATOR ============ -->
+<main class="max-w-5xl mx-auto px-5 sm:px-8 pb-24">
+
+  <!-- Mode Tabs -->
+  <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm w-full sm:w-fit mb-6">
+    <button id="tab-semester" class="mode-tab active font-display font-semibold text-sm px-5 py-2.5 rounded-xl flex-1 sm:flex-none">
+      المعدل الفصلي
+    </button>
+    <button id="tab-cumulative" class="mode-tab font-display font-semibold text-sm px-5 py-2.5 rounded-xl flex-1 sm:flex-none">
+      المعدل التراكمي
+    </button>
+  </div>
+
+  <!-- Cumulative-only inputs -->
+  <div id="cumulative-inputs" class="hidden bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+    <h3 class="font-display font-bold text-[15px] text-navy mb-4 flex items-center gap-2">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20V10M12 10L7 14M12 10L17 14" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 4H20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/></svg>
+      بياناتك السابقة
+    </h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">المعدل التراكمي السابق (من 4.00)</label>
+        <input id="prev-gpa" type="number" min="0" max="4" step="0.01" placeholder="مثال: 3.10"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">عدد الساعات المكتسبة سابقاً</label>
+        <input id="prev-hours" type="number" min="0" step="1" placeholder="مثال: 60"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">عدد ساعات الخطة الدراسية للتخصص</label>
+        <input id="total-plan-hours" type="number" min="1" step="1" placeholder="مثلاً: 162 أو 132"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+        <p class="text-xs text-slate-400 mt-2">هذا الرقم موجود في الخطة الدراسية لتخصصك (مثال: هندسة برمجيات 162 ساعة، إدارة أعمال 132 ساعة).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Courses Card -->
+  <div class="bg-white border border-slate-200 rounded-2xl shadow-sm mb-6 overflow-hidden">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border-b border-slate-100">
+      <h3 class="font-display font-bold text-[15px] text-navy flex items-center gap-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H10.5C11.3284 5 12 5.67157 12 6.5V19L9 17L6 19V6.5" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8H17.5C18.3284 8 19 8.67157 19 9.5V19L16.5 17.5L12 19" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        مواد هذا الفصل
+      </h3>
+
+      <!-- Grade input mode toggle -->
+      <div class="flex items-center gap-1 bg-surface border border-slate-200 rounded-xl p-1 self-start sm:self-auto">
+        <button id="toggle-letter" class="toggle-pill active font-display font-semibold text-xs px-3.5 py-2 rounded-lg">حرف (Letter)</button>
+        <button id="toggle-percent" class="toggle-pill font-display font-semibold text-xs px-3.5 py-2 rounded-lg">نسبة مئوية %</button>
+      </div>
+    </div>
+
+    <!-- Table header (desktop only) -->
+    <div class="hidden md:grid grid-cols-[1fr_120px_170px_44px] gap-4 px-6 pt-5 pb-2 text-xs font-display font-semibold text-slate-400">
+      <span>اسم المادة (اختياري)</span>
+      <span>عدد الساعات</span>
+      <span id="grade-col-label">العلامة</span>
+      <span></span>
+    </div>
+
+    <div id="courses-container" class="px-6 pb-4 flex flex-col gap-3"></div>
+
+    <div class="px-6 pb-6 pt-2">
+      <button id="add-course" class="w-full sm:w-auto flex items-center justify-center gap-2 font-display font-semibold text-sm text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-5 py-3 rounded-xl transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        إضافة مادة
+      </button>
+    </div>
+  </div>
+
+  <!-- Calculate button -->
+  <button id="calculate-btn" class="w-full font-display font-bold text-base sm:text-lg bg-navy hover:bg-accent text-white px-6 py-4 rounded-2xl transition-colors duration-300 shadow-lg shadow-navy/15 flex items-center justify-center gap-2.5">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="white" stroke-width="1.6"/><path d="M8 8H16M8 12H10M13 12H16M8 16H10M13 16H16" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+    احسب المعدل
+  </button>
+
+  <p id="error-msg" class="hidden text-center text-sm text-red-500 font-display font-medium mt-4"></p>
+
+  <!-- ============ RESULTS ============ -->
+  <div id="results-box" class="results-reveal mt-10">
+    <div class="relative rounded-3xl bg-navy overflow-hidden p-8 sm:p-10">
+      <div class="absolute inset-0 grain-noise opacity-40 pointer-events-none"></div>
+      <div class="absolute -left-16 -top-16 w-56 h-56 rounded-full bg-accent/20 blur-3xl"></div>
+
+      <div class="relative z-10">
+        <h3 class="font-display font-bold text-lg text-white mb-6">نتيجتك</h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-2">المعدل الفصلي</p>
+            <p id="result-semester" class="font-display font-extrabold text-3xl text-white">--</p>
+          </div>
+          <div id="result-cumulative-box" class="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-2">المعدل التراكمي الجديد</p>
+            <p id="result-cumulative" class="font-display font-extrabold text-3xl text-accent-light">--</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-5 text-center flex flex-col items-center justify-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-2">التقدير</p>
+            <span id="result-rating" class="font-display font-bold text-sm px-4 py-1.5 rounded-full bg-accent/20 text-accent-light border border-accent/30">--</span>
+          </div>
+        </div>
+
+        <p id="result-hours-note" class="text-slate-400 text-xs font-display mt-5 text-center"></p>
+
+        <!-- Degree Progress -->
+        <div id="progress-section" class="hidden mt-6 pt-6 border-t border-white/10">
+          <div class="grid grid-cols-2 gap-4 mb-5">
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+              <p class="text-slate-300 text-xs font-display font-medium mb-1.5">إجمالي الساعات المقطوعة</p>
+              <p id="result-total-completed" class="font-display font-extrabold text-2xl text-white">--</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+              <p class="text-slate-300 text-xs font-display font-medium mb-1.5">الساعات المتبقية للتخرج</p>
+              <p id="result-remaining" class="font-display font-extrabold text-2xl text-accent-light">--</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-slate-300 text-xs font-display font-medium">نسبة الإنجاز من الخطة الدراسية</p>
+              <p id="progress-percent-label" class="text-white text-xs font-display font-bold">--%</p>
+            </div>
+            <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="progress-bar-fill" class="h-full bg-gradient-to-l from-accent to-accent-light rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+            </div>
+            <p id="progress-hours-note" class="text-slate-400 text-xs font-display mt-2 text-center"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grading scale reference -->
+  <div class="mt-10 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+    <h3 class="font-display font-bold text-[15px] text-navy mb-1">سلم العلامات الرسمي - النظام الجديد</h3>
+    <p class="text-xs text-slate-400 mb-4">الجامعة الأردنية</p>
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center" id="grading-scale-ref"></div>
+  </div>
+
+  <!-- Rating scale reference -->
+  <div class="mt-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+    <h3 class="font-display font-bold text-[15px] text-navy mb-4">سلم التقدير الرسمي - النظام الجديد</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl py-3 px-2">
+        <p class="font-display font-bold text-sm text-emerald-700">ممتاز</p>
+        <p class="text-xs text-emerald-600 mt-0.5">4.00 - 3.65</p>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded-xl py-3 px-2">
+        <p class="font-display font-bold text-sm text-blue-700">جيد جداً</p>
+        <p class="text-xs text-blue-600 mt-0.5">3.64 - 3.00</p>
+      </div>
+      <div class="bg-sky-50 border border-sky-200 rounded-xl py-3 px-2">
+        <p class="font-display font-bold text-sm text-sky-700">جيد</p>
+        <p class="text-xs text-sky-600 mt-0.5">2.99 - 2.50</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl py-3 px-2">
+        <p class="font-display font-bold text-sm text-amber-700">مقبول</p>
+        <p class="text-xs text-amber-600 mt-0.5">2.49 - 2.00</p>
+      </div>
+      <div class="bg-red-50 border border-red-200 rounded-xl py-3 px-2">
+        <p class="font-display font-bold text-sm text-red-700">ضعيف / أنذار</p>
+        <p class="text-xs text-red-600 mt-0.5">أقل من 2.00</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 text-center">
+    <a href="index.html" class="inline-flex items-center gap-2 font-display font-semibold text-sm text-slate-500 hover:text-accent transition-colors">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 12H7M7 12L11 16M7 12L11 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      عودة للرئيسية
+    </a>
+  </div>
+
+</main>
+
+<script>
+  // ---------- UJ NEW Grading System scale ----------
+  const gradeScale = [
+    { letter: 'A',  points: 4.00 },
+    { letter: 'A-', points: 3.75 },
+    { letter: 'B+', points: 3.50 },
+    { letter: 'B',  points: 3.00 },
+    { letter: 'B-', points: 2.75 },
+    { letter: 'C+', points: 2.50 },
+    { letter: 'C',  points: 2.00 },
+    { letter: 'C-', points: 1.75 },
+    { letter: 'D+', points: 1.50 },
+    { letter: 'D',  points: 1.00 },
+    { letter: 'D-', points: 0.75 },
+    { letter: 'F',  points: 0.00 },
+  ];
+
+  // Percentage breakpoints -> letter/points (estimation, mapped to UJ new grading curve)
+  const percentBreakpoints = [
+    { min: 95, letter: 'A',  points: 4.00 },
+    { min: 90, letter: 'A-', points: 3.75 },
+    { min: 85, letter: 'B+', points: 3.50 },
+    { min: 80, letter: 'B',  points: 3.00 },
+    { min: 75, letter: 'B-', points: 2.75 },
+    { min: 70, letter: 'C+', points: 2.50 },
+    { min: 65, letter: 'C',  points: 2.00 },
+    { min: 60, letter: 'C-', points: 1.75 },
+    { min: 55, letter: 'D+', points: 1.50 },
+    { min: 50, letter: 'D',  points: 1.00 },
+    { min: 45, letter: 'D-', points: 0.75 },
+    { min: 0,  letter: 'F',  points: 0.00 },
+  ];
+
+  function percentToPoints(p) {
+    const match = percentBreakpoints.find(b => p >= b.min);
+    return match ? match.points : 0;
+  }
+
+  // Render grading scale reference table
+  const refContainer = document.getElementById('grading-scale-ref');
+  refContainer.innerHTML = gradeScale.map(g => `
+    <div class="bg-surface border border-slate-200 rounded-xl py-2.5">
+      <p class="font-display font-bold text-sm text-navy">${g.letter}</p>
+      <p class="text-xs text-slate-400 mt-0.5">${g.points.toFixed(2)}</p>
+    </div>
+  `).join('');
+
+  // ---------- State ----------
+  let gradeMode = 'letter'; // 'letter' | 'percent'
+  let courseIdCounter = 0;
+  const coursesContainer = document.getElementById('courses-container');
+
+  function letterOptionsHTML(selected) {
+    return gradeScale.map(g =>
+      `<option value="${g.letter}" ${g.letter === selected ? 'selected' : ''}>${g.letter} — ${g.points.toFixed(2)}</option>`
+    ).join('');
+  }
+
+  function courseRowHTML(id) {
+    const gradeField = gradeMode === 'letter'
+      ? `<div class="select-wrap">
+           <select data-role="grade-letter" data-id="${id}"
+             class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+             ${letterOptionsHTML('A')}
+           </select>
+         </div>`
+      : `<input data-role="grade-percent" data-id="${id}" type="number" min="0" max="100" step="0.1" placeholder="0-100"
+           class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">`;
+
+    return `
+      <div class="course-row grid grid-cols-1 md:grid-cols-[1fr_120px_170px_44px] gap-3 items-center" data-course-id="${id}">
+        <input data-role="name" type="text" placeholder="مثال: مبادئ البرمجة"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+
+        <input data-role="hours" type="number" min="1" max="6" step="1" value="3"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm text-center focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+
+        <div data-role="grade-cell">${gradeField}</div>
+
+        <button data-role="remove" data-id="${id}" aria-label="حذف مادة"
+          class="w-full md:w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors mx-auto">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    `;
+  }
+
+  function addCourse() {
+    const id = courseIdCounter++;
+    coursesContainer.insertAdjacentHTML('beforeend', courseRowHTML(id));
+  }
+
+  function removeCourse(id) {
+    const row = coursesContainer.querySelector(`[data-course-id="${id}"]`);
+    if (row) row.remove();
+    // Always keep at least one row
+    if (!coursesContainer.querySelector('[data-course-id]')) addCourse();
+  }
+
+  // Event delegation for remove buttons
+  coursesContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-role="remove"]');
+    if (btn) removeCourse(btn.dataset.id);
+  });
+
+  document.getElementById('add-course').addEventListener('click', addCourse);
+
+  // ---------- Grade mode toggle ----------
+  const toggleLetterBtn = document.getElementById('toggle-letter');
+  const togglePercentBtn = document.getElementById('toggle-percent');
+  const gradeColLabel = document.getElementById('grade-col-label');
+
+  function setGradeMode(mode) {
+    gradeMode = mode;
+    toggleLetterBtn.classList.toggle('active', mode === 'letter');
+    togglePercentBtn.classList.toggle('active', mode === 'percent');
+    gradeColLabel.textContent = mode === 'letter' ? 'العلامة (حرف)' : 'العلامة (نسبة %)';
+
+    // Re-render grade cell for every existing row, preserving name/hours
+    document.querySelectorAll('[data-course-id]').forEach(row => {
+      const id = row.dataset.courseId;
+      const cell = row.querySelector('[data-role="grade-cell"]');
+      cell.innerHTML = gradeMode === 'letter'
+        ? `<div class="select-wrap">
+             <select data-role="grade-letter" data-id="${id}"
+               class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+               ${letterOptionsHTML('A')}
+             </select>
+           </div>`
+        : `<input data-role="grade-percent" data-id="${id}" type="number" min="0" max="100" step="0.1" placeholder="0-100"
+             class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">`;
+    });
+  }
+
+  toggleLetterBtn.addEventListener('click', () => setGradeMode('letter'));
+  togglePercentBtn.addEventListener('click', () => setGradeMode('percent'));
+
+  // ---------- Calculation Mode Tabs ----------
+  const tabSemester = document.getElementById('tab-semester');
+  const tabCumulative = document.getElementById('tab-cumulative');
+  const cumulativeInputs = document.getElementById('cumulative-inputs');
+  const resultCumulativeBox = document.getElementById('result-cumulative-box');
+  let calcMode = 'semester'; // 'semester' | 'cumulative'
+
+  function setCalcMode(mode) {
+    calcMode = mode;
+    tabSemester.classList.toggle('active', mode === 'semester');
+    tabCumulative.classList.toggle('active', mode === 'cumulative');
+    cumulativeInputs.classList.toggle('hidden', mode !== 'cumulative');
+    resultCumulativeBox.style.display = mode === 'cumulative' ? '' : 'none';
+    hideResults();
+  }
+
+  tabSemester.addEventListener('click', () => setCalcMode('semester'));
+  tabCumulative.addEventListener('click', () => setCalcMode('cumulative'));
+
+  // ---------- Official UJ NEW system rating ----------
+  function getRating(gpa) {
+    if (gpa >= 3.65) return { label: 'ممتاز', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' };
+    if (gpa >= 3.00) return { label: 'جيد جداً', color: 'bg-accent/20 text-accent-light border-accent/30' };
+    if (gpa >= 2.50) return { label: 'جيد', color: 'bg-sky-500/20 text-sky-300 border-sky-400/30' };
+    if (gpa >= 2.00) return { label: 'مقبول', color: 'bg-amber-500/20 text-amber-300 border-amber-400/30' };
+    return { label: 'ضعيف / أنذار', color: 'bg-red-500/20 text-red-300 border-red-400/30' };
+  }
+
+  // ---------- Results display ----------
+  const resultsBox = document.getElementById('results-box');
+  const errorMsg = document.getElementById('error-msg');
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.remove('hidden');
+    hideResults();
+  }
+  function clearError() {
+    errorMsg.classList.add('hidden');
+    errorMsg.textContent = '';
+  }
+  function hideResults() {
+    resultsBox.classList.remove('show');
+  }
+
+  // ---------- Calculate ----------
+  document.getElementById('calculate-btn').addEventListener('click', () => {
+    clearError();
+
+    const rows = Array.from(document.querySelectorAll('[data-course-id]'));
+    let totalPoints = 0;
+    let totalHours = 0;
+    let hasValidCourse = false;
+
+    for (const row of rows) {
+      const hoursInput = row.querySelector('[data-role="hours"]');
+      const hours = parseFloat(hoursInput.value);
+
+      if (!hours || hours <= 0) continue;
+
+      let points = null;
+
+      if (gradeMode === 'letter') {
+        const select = row.querySelector('[data-role="grade-letter"]');
+        const found = gradeScale.find(g => g.letter === select.value);
+        points = found ? found.points : null;
+      } else {
+        const input = row.querySelector('[data-role="grade-percent"]');
+        const val = parseFloat(input.value);
+        if (isNaN(val)) continue;
+        if (val < 0 || val > 100) {
+          showError('يرجى إدخال علامة مئوية صحيحة بين 0 و100.');
+          return;
+        }
+        points = percentToPoints(val);
+      }
+
+      if (points === null) continue;
+
+      totalPoints += points * hours;
+      totalHours += hours;
+      hasValidCourse = true;
+    }
+
+    if (!hasValidCourse || totalHours === 0) {
+      showError('يرجى إدخال مادة واحدة على الأقل مع عدد ساعات صحيح.');
+      return;
+    }
+
+    const semesterGPA = totalPoints / totalHours;
+
+    document.getElementById('result-semester').textContent = semesterGPA.toFixed(2);
+
+    let ratingGPA = semesterGPA;
+    let hoursNote = `بناءً على ${totalHours} ساعة معتمدة هذا الفصل.`;
+    const progressSection = document.getElementById('progress-section');
+    progressSection.classList.add('hidden');
+
+    if (calcMode === 'cumulative') {
+      const prevGpaInput = parseFloat(document.getElementById('prev-gpa').value);
+      const prevHoursInput = parseFloat(document.getElementById('prev-hours').value);
+
+      if (isNaN(prevGpaInput) || prevGpaInput < 0 || prevGpaInput > 4) {
+        showError('يرجى إدخال معدل تراكمي سابق صحيح بين 0.00 و4.00.');
+        return;
+      }
+      if (isNaN(prevHoursInput) || prevHoursInput < 0) {
+        showError('يرجى إدخال عدد ساعات سابقة صحيح.');
+        return;
+      }
+
+      const combinedPoints = (prevGpaInput * prevHoursInput) + totalPoints;
+      const combinedHours = prevHoursInput + totalHours;
+      const newCumulative = combinedPoints / combinedHours;
+
+      document.getElementById('result-cumulative').textContent = newCumulative.toFixed(2);
+      ratingGPA = newCumulative;
+      hoursNote = `إجمالي الساعات بعد هذا الفصل: ${combinedHours} ساعة معتمدة.`;
+
+      // Degree plan progress (optional field)
+      const totalPlanInput = document.getElementById('total-plan-hours').value;
+      if (totalPlanInput !== '') {
+        const totalPlanHours = parseFloat(totalPlanInput);
+
+        if (isNaN(totalPlanHours) || totalPlanHours <= 0) {
+          showError('يرجى إدخال عدد ساعات صحيح للخطة الدراسية.');
+          return;
+        }
+        if (combinedHours > totalPlanHours) {
+          showError('عدد الساعات المقطوعة أكبر من عدد ساعات الخطة الدراسية المدخل. يرجى التحقق من الأرقام.');
+          return;
+        }
+
+        const remainingHours = totalPlanHours - combinedHours;
+        const progressPercent = (combinedHours / totalPlanHours) * 100;
+
+        document.getElementById('result-total-completed').textContent = combinedHours;
+        document.getElementById('result-remaining').textContent = remainingHours;
+        document.getElementById('progress-percent-label').textContent = `${progressPercent.toFixed(1)}%`;
+        document.getElementById('progress-bar-fill').style.width = `${Math.min(progressPercent, 100).toFixed(1)}%`;
+        document.getElementById('progress-hours-note').textContent =
+          `${combinedHours} من أصل ${totalPlanHours} ساعة معتمدة في الخطة الدراسية.`;
+
+        progressSection.classList.remove('hidden');
+      }
+    }
+
+    const rating = getRating(ratingGPA);
+    const ratingEl = document.getElementById('result-rating');
+    ratingEl.textContent = rating.label;
+    ratingEl.className = `font-display font-bold text-sm px-4 py-1.5 rounded-full border ${rating.color}`;
+
+    document.getElementById('result-hours-note').textContent = hoursNote;
+
+    resultsBox.classList.add('show');
+    resultsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // ---------- Init ----------
+  addCourse();
+  addCourse();
+  resultCumulativeBox.style.display = 'none';
+</script>
+
+</body>
+</html>
