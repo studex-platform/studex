@@ -188,7 +188,7 @@
 
     <!-- Table header (desktop only) -->
     <div class="hidden md:grid grid-cols-[1fr_120px_170px_44px] gap-4 px-6 pt-5 pb-2 text-xs font-display font-semibold text-slate-400">
-      <span>اسم المادة (اختياري)</span>
+      <span>المادة</span>
       <span>عدد الساعات</span>
       <span id="grade-col-label">العلامة</span>
       <span></span>
@@ -380,8 +380,9 @@
 
     return `
       <div class="course-row grid grid-cols-1 md:grid-cols-[1fr_120px_170px_44px] gap-3 items-center" data-course-id="${id}">
-        <input data-role="name" type="text" placeholder="مثال: مبادئ البرمجة"
-          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+        <div data-role="name-label"
+          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-500 font-display font-semibold select-none">
+          المادة</div>
 
         <input data-role="hours" type="number" min="1" max="6" step="1" value="3"
           class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm text-center focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
@@ -396,9 +397,18 @@
     `;
   }
 
+  function renumberCourses() {
+    const rows = Array.from(coursesContainer.querySelectorAll('[data-course-id]'));
+    rows.forEach((row, index) => {
+      const label = row.querySelector('[data-role="name-label"]');
+      if (label) label.textContent = `المادة ${index + 1}`;
+    });
+  }
+
   function addCourse() {
     const id = courseIdCounter++;
     coursesContainer.insertAdjacentHTML('beforeend', courseRowHTML(id));
+    renumberCourses();
   }
 
   function removeCourse(id) {
@@ -406,6 +416,7 @@
     if (row) row.remove();
     // Always keep at least one row
     if (!coursesContainer.querySelector('[data-course-id]')) addCourse();
+    renumberCourses();
   }
 
   // Event delegation for remove buttons

@@ -78,6 +78,15 @@
   }
   #modal-backdrop.show #modal-panel { transform: translateY(0) scale(1); opacity: 1; }
 
+  #admin-modal-backdrop {
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  #admin-modal-backdrop.show { opacity: 1; pointer-events: auto; }
+  #admin-modal-panel {
+    transform: translateY(16px) scale(0.98); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  #admin-modal-backdrop.show #admin-modal-panel { transform: translateY(0) scale(1); opacity: 1; }
+
   .replies-panel { max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s ease, opacity 0.3s ease; }
   .replies-panel.open { max-height: 900px; opacity: 1; }
 
@@ -86,6 +95,10 @@
 
   .chevron { transition: transform 0.3s ease; }
   .chevron.rotated { transform: rotate(180deg); }
+
+  .identity-mode-btn { transition: all 0.2s ease; }
+  .identity-mode-btn.active { background: #0F172A; color: #fff; }
+  .identity-mode-btn:not(.active) { color: #64748B; }
 
   ::selection { background: #3B82F6; color: white; }
   ::-webkit-scrollbar { height: 8px; width: 8px; }
@@ -116,7 +129,7 @@
       </nav>
 
       <div class="hidden lg:flex items-center gap-3">
-        <button class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20">
+        <button onclick="openAdminPanel()" class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20">
           لوحة التحكم
         </button>
       </div>
@@ -136,7 +149,7 @@
         <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
         <a href="career.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
         <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
-          <button class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg">لوحة التحكم</button>
+          <button onclick="openAdminPanel()" class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg">لوحة التحكم</button>
         </div>
       </nav>
     </div>
@@ -320,9 +333,14 @@
 
     <form id="post-form" onsubmit="handleAddPost(event)" class="p-6 flex flex-col gap-5">
       <div>
-        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">الاسم المستعار (اختياري)</label>
-        <input type="text" id="post-author" placeholder="مثال: طالب هندسة برمجيات"
-          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">هويتك في هذا المنشور</label>
+        <p class="text-[11px] text-slate-400 mb-2">اختر اسماً صريحاً أو انشر بشكل مجهول. هذا الاختيار سيثبت تلقائياً على منشورك وكل ردودك ضمنه، ولن تتمكن من تغييره لاحقاً في نفس النقاش.</p>
+        <div class="identity-picker flex items-center gap-2 mb-2" data-mode="named">
+          <button type="button" data-mode-btn="named" class="identity-mode-btn active font-display font-semibold text-xs px-3.5 py-2 rounded-lg bg-surface border border-slate-200">اسمي الصريح</button>
+          <button type="button" data-mode-btn="anon" class="identity-mode-btn font-display font-semibold text-xs px-3.5 py-2 rounded-lg bg-surface border border-slate-200">عضو مجهول</button>
+          <input type="text" data-role="identity-name-input" placeholder="اكتب اسمك..."
+            class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+        </div>
       </div>
 
       <div>
@@ -350,6 +368,22 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ ADMIN PANEL MODAL ============ -->
+<div id="admin-modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="admin-modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-6 border-b border-slate-100">
+      <div>
+        <h3 class="font-display font-bold text-lg text-navy">لوحة التحكم — المنشورات المعلّقة</h3>
+        <p class="text-xs text-slate-400 mt-1">راجع المنشورات الجديدة ووافق عليها أو ارفضها قبل ظهورها للجميع</p>
+      </div>
+      <button onclick="closeAdminPanel()" class="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-navy hover:bg-slate-50 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="admin-pending-list" class="p-6 flex flex-col gap-4"></div>
   </div>
 </div>
 
@@ -401,6 +435,65 @@
     const trimmed = (name || 'طالب').trim();
     return trimmed.charAt(0);
   }
+  // يبني واجهة اختيار الهوية (اسم صريح / عضو مجهول) — تظهر فقط إذا لم يتم
+  // تثبيت هوية هذا الجهاز على هذا المنشور بعد. إن كانت مثبّتة مسبقاً، لا حاجة لإظهارها.
+  function identityPickerHTML(postId) {
+    if (getLockedIdentity(postId)) return '';
+    return `
+      <div class="identity-picker flex items-center gap-2" data-mode="named">
+        <button type="button" data-mode-btn="named" class="identity-mode-btn active font-display font-semibold text-[11px] px-3 py-1.5 rounded-lg bg-white border border-slate-200">اسمي الصريح</button>
+        <button type="button" data-mode-btn="anon" class="identity-mode-btn font-display font-semibold text-[11px] px-3 py-1.5 rounded-lg bg-white border border-slate-200">عضو مجهول</button>
+        <input type="text" data-role="identity-name-input" placeholder="اكتب اسمك..."
+          class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+      </div>
+    `;
+  }
+
+  // يقرأ اختيار الهوية من نموذج (منشور جديد أو تعليق) ويثبّته لهذا المنشور
+  // على هذا الجهاز، ثم يعيد الاسم النهائي المستخدم.
+  function resolveIdentityFromForm(formEl, postId) {
+    const picker = formEl.querySelector('.identity-picker');
+    if (!picker) {
+      // الهوية مثبّتة مسبقاً لهذا المنشور على هذا الجهاز
+      return getLockedIdentity(postId) || 'عضو مجهول';
+    }
+    const mode = picker.dataset.mode || 'named';
+    let name;
+    if (mode === 'anon') {
+      name = 'عضو مجهول';
+    } else {
+      const input = picker.querySelector('[data-role="identity-name-input"]');
+      name = (input ? input.value.trim() : '') || null;
+      if (!name) return null; // يجب إدخال اسم أو اختيار "عضو مجهول"
+    }
+    lockIdentity(postId, name);
+    return name;
+  }
+
+  function isOwnerOfPost(post) {
+    return !!post.ownerId && post.ownerId === deviceId;
+  }
+
+  // تفويض الأحداث لأزرار تبديل وضع الهوية (اسمي الصريح / عضو مجهول)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-mode-btn]');
+    if (!btn) return;
+    const picker = btn.closest('.identity-picker');
+    if (!picker) return;
+    const mode = btn.dataset.modeBtn;
+    picker.dataset.mode = mode;
+    picker.querySelectorAll('[data-mode-btn]').forEach(b => b.classList.toggle('active', b === btn));
+    const nameInput = picker.querySelector('[data-role="identity-name-input"]');
+    if (nameInput) {
+      if (mode === 'anon') {
+        nameInput.classList.add('hidden');
+        nameInput.value = '';
+      } else {
+        nameInput.classList.remove('hidden');
+      }
+    }
+  });
+
   // يحسب عدد كل التعليقات والردود المتداخلة ضمن منشور معيّن
   function countReplies(replies) {
     return replies.reduce((total, r) => total + 1 + countReplies(r.replies || []), 0);
@@ -417,6 +510,52 @@
   }
 
   /* =====================================================================
+     DEVICE IDENTITY (client-side only — see note at bottom of file)
+  ===================================================================== */
+  const DEVICE_ID_KEY = 'studex_device_id';
+  function getDeviceId() {
+    let id = localStorage.getItem(DEVICE_ID_KEY);
+    if (!id) {
+      id = cryptoId();
+      localStorage.setItem(DEVICE_ID_KEY, id);
+    }
+    return id;
+  }
+  const deviceId = getDeviceId();
+
+  /* =====================================================================
+     PER-POST IDENTITY LOCK
+     يضمن أن نفس الجهاز يستخدم نفس الاسم (الصريح أو "عضو مجهول") طوال
+     نفس المنشور — لا يمكنه تغييره وسط نفس النقاش. عند إنشاء منشور جديد
+     لاحقاً يمكنه اختيار اسم مختلف.
+  ===================================================================== */
+  const IDENTITY_STORAGE_KEY = 'studex_identities_v1';
+  let identities = {};
+  function loadIdentities() {
+    try { identities = JSON.parse(localStorage.getItem(IDENTITY_STORAGE_KEY)) || {}; }
+    catch (e) { identities = {}; }
+  }
+  function saveIdentities() {
+    try { localStorage.setItem(IDENTITY_STORAGE_KEY, JSON.stringify(identities)); }
+    catch (e) { console.warn('تعذر حفظ الهوية', e); }
+  }
+  function identityKey(postId) { return `${deviceId}__${postId}`; }
+  function getLockedIdentity(postId) {
+    return identities[identityKey(postId)] || null;
+  }
+  function lockIdentity(postId, name) {
+    identities[identityKey(postId)] = name;
+    saveIdentities();
+  }
+
+  /* =====================================================================
+     ADMIN SESSION (front-end gate only — see note at bottom of file)
+  ===================================================================== */
+  const ADMIN_PASSCODE = 'studex-admin-2025'; // TODO: استبدلها بنظام مصادقة حقيقي قبل الإطلاق الفعلي
+  const ADMIN_SESSION_KEY = 'studex_admin_session';
+  function isAdmin() { return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }
+
+  /* =====================================================================
      STATE / STORAGE
   ===================================================================== */
   const STORAGE_KEY = 'studex_community_posts_v1';
@@ -427,7 +566,7 @@
     const now = Date.now();
     return [
       {
-        id: cryptoId(), author: 'طالب هندسة برمجيات', category: 'courses',
+        id: cryptoId(), author: 'طالب هندسة برمجيات', category: 'courses', status: 'approved', ownerId: null,
         content: 'هل مادة هيكلة البيانات صعبة الفصل هذا؟\n\nحابب أعرف تجارب الطلاب اللي أخذوا المادة الفصل الماضي، وشو أفضل طريقة للمذاكرة قبل الامتحان النهائي.',
         createdAt: now - 2 * 3600 * 1000, likes: 6, liked: false,
         replies: [
@@ -439,13 +578,13 @@
         ],
       },
       {
-        id: cryptoId(), author: 'طالبة نظم معلومات', category: 'courses',
+        id: cryptoId(), author: 'طالبة نظم معلومات', category: 'courses', status: 'approved', ownerId: null,
         content: 'أسلوب تدريس د. سامر في مادة الشبكات\n\nحد أخذ معه قبل؟ حابب أعرف شو أسلوب الامتحانات عنده وهل السلايدات كافية للمذاكرة.',
         createdAt: now - 5 * 3600 * 1000, likes: 3, liked: false,
         replies: [],
       },
       {
-        id: cryptoId(), author: 'طالب هندسة حاسوب', category: 'experiences',
+        id: cryptoId(), author: 'طالب هندسة حاسوب', category: 'experiences', status: 'approved', ownerId: null,
         content: 'تجربتي بالتدريب الصيفي في شركة تقنية محلية\n\nقضيت تدريب صيفي مدته شهرين، وحابب أشارك أهم الدروس اللي تعلمتها لأي طالب ناوي يقدم على تدريب مشابه.',
         createdAt: now - 26 * 3600 * 1000, likes: 14, liked: false,
         replies: [
@@ -490,6 +629,7 @@
     const emptyState = document.getElementById('empty-state');
 
     const filtered = posts
+      .filter(p => p.status === 'approved')
       .filter(p => currentFilter === 'all' || p.category === currentFilter)
       .sort((a, b) => b.createdAt - a.createdAt);
 
@@ -520,7 +660,20 @@
               <p class="text-xs text-slate-400">${formatRelativeTime(post.createdAt)}</p>
             </div>
           </div>
-          <span class="inline-flex items-center px-2.5 py-1 text-xs font-display font-semibold rounded-full border ${meta.badge} shrink-0">${meta.name}</span>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="inline-flex items-center px-2.5 py-1 text-xs font-display font-semibold rounded-full border ${meta.badge}">${meta.name}</span>
+            ${isAdmin() ? `
+              <button onclick="adminDeletePost('${post.id}')" title="حذف (مسؤول)"
+                class="w-7 h-7 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19.1C17.2 20.2 16.3 21 15.2 21H8.8C7.7 21 6.8 20.2 6.7 19.1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            ` : isOwnerOfPost(post) ? `
+              <button onclick="deleteOwnPost('${post.id}')" title="حذف المنشور"
+                class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 7H20M9 7V5C9 4.44772 9.44772 4 10 4H14C14.5523 4 15 4.44772 15 5V7M18 7L17.3 19.1C17.2 20.2 16.3 21 15.2 21H8.8C7.7 21 6.8 20.2 6.7 19.1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            ` : ''}
+          </div>
         </div>
 
         <p class="text-[15px] text-slate-700 leading-relaxed whitespace-pre-line">${escapeHTML(post.content)}</p>
@@ -541,12 +694,15 @@
           <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
             ${post.replies.map(r => replyHTML(r, post.id)).join('') || `<p class="text-xs text-slate-300 font-display text-center py-2">لا توجد إجابات بعد، كن أول من يجيب</p>`}
 
-            <form onsubmit="handleReplySubmit(event, '${post.id}', null)" class="flex items-center gap-2 mt-1">
-              <input type="text" required placeholder="اكتب إجابتك أو تعليقك..."
-                class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
-              <button type="submit" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
-              </button>
+            <form onsubmit="handleReplySubmit(event, '${post.id}', null)" class="flex flex-col gap-2 mt-1">
+              ${identityPickerHTML(post.id)}
+              <div class="flex items-center gap-2">
+                <input type="text" required placeholder="اكتب إجابتك أو تعليقك..."
+                  class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+                <button type="submit" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -570,7 +726,15 @@
             <div class="bg-surface rounded-xl px-3.5 py-2.5">
               <div class="flex items-center justify-between gap-2 mb-0.5">
                 <p class="font-display font-semibold text-xs text-navy">${escapeHTML(reply.author)}</p>
-                <p class="text-[11px] text-slate-400">${formatRelativeTime(reply.createdAt)}</p>
+                <div class="flex items-center gap-2 shrink-0">
+                  <p class="text-[11px] text-slate-400">${formatRelativeTime(reply.createdAt)}</p>
+                  ${isAdmin() ? `
+                    <button onclick="adminDeleteReply('${postId}', '${reply.id}')" title="حذف (مسؤول)"
+                      class="w-5 h-5 flex items-center justify-center rounded text-red-500 hover:bg-red-100 transition-colors">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                  ` : ''}
+                </div>
               </div>
               <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(reply.content)}</p>
             </div>
@@ -580,12 +744,15 @@
             </button>
 
             ${isReplyBoxOpen ? `
-              <form onsubmit="handleReplySubmit(event, '${postId}', '${reply.id}')" class="flex items-center gap-2 mt-2">
-                <input type="text" required autofocus placeholder="اكتب ردك على ${escapeHTML(reply.author)}..."
-                  class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
-                <button type="submit" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
-                </button>
+              <form onsubmit="handleReplySubmit(event, '${postId}', '${reply.id}')" class="flex flex-col gap-2 mt-2">
+                ${identityPickerHTML(postId)}
+                <div class="flex items-center gap-2">
+                  <input type="text" required autofocus placeholder="اكتب ردك على ${escapeHTML(reply.author)}..."
+                    class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+                  <button type="submit" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
+                  </button>
+                </div>
               </form>
             ` : ''}
 
@@ -598,6 +765,124 @@
         </div>
       </div>
     `;
+  }
+
+  /* =====================================================================
+     OWNER: DELETE OWN POST (لا يوجد تعديل، حذف فقط)
+  ===================================================================== */
+  function deleteOwnPost(id) {
+    const post = posts.find(p => p.id === id);
+    if (!post || !isOwnerOfPost(post)) return;
+    if (!confirm('هل أنت متأكد من حذف منشورك؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    posts = posts.filter(p => p.id !== id);
+    savePosts();
+    renderFeed();
+  }
+
+  /* =====================================================================
+     ADMIN: MODERATION (Pending posts + delete any content)
+  ===================================================================== */
+  function openAdminPanel() {
+    if (!isAdmin()) {
+      const pass = prompt('أدخل كلمة مرور المسؤول:');
+      if (pass === null) return;
+      if (pass !== ADMIN_PASSCODE) {
+        alert('كلمة المرور غير صحيحة.');
+        return;
+      }
+      sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+      renderFeed(); // لإظهار أزرار حذف المسؤول على الفور
+    }
+    renderAdminPanel();
+    document.getElementById('admin-modal-backdrop').classList.add('show');
+  }
+  function closeAdminPanel() {
+    document.getElementById('admin-modal-backdrop').classList.remove('show');
+  }
+  document.getElementById('admin-modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'admin-modal-backdrop') closeAdminPanel();
+  });
+
+  function renderAdminPanel() {
+    const container = document.getElementById('admin-pending-list');
+    const pending = posts.filter(p => p.status === 'pending').sort((a, b) => b.createdAt - a.createdAt);
+
+    if (pending.length === 0) {
+      container.innerHTML = `<p class="text-sm text-slate-400 text-center py-10">لا توجد منشورات بانتظار المراجعة حالياً.</p>`;
+      return;
+    }
+
+    container.innerHTML = pending.map(post => {
+      const meta = categoryMeta[post.category] || categoryMeta.courses;
+      return `
+        <div class="border border-slate-200 rounded-2xl p-5">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <div class="flex items-center gap-2">
+              <p class="font-display font-semibold text-sm text-navy">${escapeHTML(post.author)}</p>
+              <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-display font-semibold rounded-full border ${meta.badge}">${meta.name}</span>
+            </div>
+            <p class="text-[11px] text-slate-400">${formatRelativeTime(post.createdAt)}</p>
+          </div>
+          <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-4">${escapeHTML(post.content)}</p>
+          <div class="flex items-center gap-3">
+            <button onclick="approvePost('${post.id}')" class="flex-1 font-display font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-colors">
+              موافقة
+            </button>
+            <button onclick="rejectPost('${post.id}')" class="flex-1 font-display font-bold text-sm bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2.5 rounded-xl transition-colors">
+              رفض / حذف
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function approvePost(id) {
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+    post.status = 'approved';
+    savePosts();
+    renderAdminPanel();
+    renderFeed();
+  }
+
+  function rejectPost(id) {
+    if (!confirm('هل تريد رفض هذا المنشور وحذفه نهائياً؟')) return;
+    posts = posts.filter(p => p.id !== id);
+    savePosts();
+    renderAdminPanel();
+    renderFeed();
+  }
+
+  function adminDeletePost(id) {
+    if (!isAdmin()) return;
+    if (!confirm('حذف هذا المنشور نهائياً بصفتك المسؤول؟')) return;
+    posts = posts.filter(p => p.id !== id);
+    savePosts();
+    renderFeed();
+  }
+
+  // يبحث عن تعليق ضمن شجرة الردود ويحذفه أينما كان (حتى لو رداً متداخلاً)
+  function removeReplyRecursive(replies, id) {
+    const index = replies.findIndex(r => r.id === id);
+    if (index !== -1) {
+      replies.splice(index, 1);
+      return true;
+    }
+    for (const r of replies) {
+      if (r.replies && r.replies.length && removeReplyRecursive(r.replies, id)) return true;
+    }
+    return false;
+  }
+
+  function adminDeleteReply(postId, replyId) {
+    if (!isAdmin()) return;
+    if (!confirm('حذف هذا التعليق نهائياً بصفتك المسؤول؟')) return;
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    removeReplyRecursive(post.replies, replyId);
+    savePosts();
+    renderFeed();
   }
 
   /* =====================================================================
@@ -647,14 +932,21 @@
   // parentReplyId = معرّف تعليق يعني رد متداخل تحت ذلك التعليق تحديداً
   function handleReplySubmit(e, postId, parentReplyId) {
     e.preventDefault();
-    const input = e.target.querySelector('input');
+    const form = e.target;
+    const input = form.querySelector('input[type="text"]:not([data-role="identity-name-input"])');
     const content = input.value.trim();
     if (!content) return;
 
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    const newReply = { id: cryptoId(), author: 'أنت', content, createdAt: Date.now(), replies: [] };
+    const author = resolveIdentityFromForm(form, postId);
+    if (!author) {
+      alert('يرجى إدخال اسمك أو اختيار "عضو مجهول" قبل الإرسال.');
+      return;
+    }
+
+    const newReply = { id: cryptoId(), author, content, createdAt: Date.now(), replies: [] };
 
     if (!parentReplyId) {
       post.replies.push(newReply);
@@ -680,7 +972,15 @@
   function openPostModal() { document.getElementById('modal-backdrop').classList.add('show'); }
   function closePostModal() {
     document.getElementById('modal-backdrop').classList.remove('show');
-    document.getElementById('post-form').reset();
+    const form = document.getElementById('post-form');
+    form.reset();
+    const picker = form.querySelector('.identity-picker');
+    if (picker) {
+      picker.dataset.mode = 'named';
+      picker.querySelectorAll('[data-mode-btn]').forEach(b => b.classList.toggle('active', b.dataset.modeBtn === 'named'));
+      const nameInput = picker.querySelector('[data-role="identity-name-input"]');
+      if (nameInput) nameInput.classList.remove('hidden');
+    }
   }
   document.getElementById('modal-backdrop').addEventListener('click', (e) => {
     if (e.target.id === 'modal-backdrop') closePostModal();
@@ -688,9 +988,20 @@
 
   function handleAddPost(e) {
     e.preventDefault();
+    const form = e.target;
+    const postId = cryptoId();
+
+    const author = resolveIdentityFromForm(form, postId);
+    if (!author) {
+      alert('يرجى إدخال اسمك أو اختيار "عضو مجهول" قبل النشر.');
+      return;
+    }
+
     const newPost = {
-      id: cryptoId(),
-      author: document.getElementById('post-author').value.trim() || 'طالب مجهول',
+      id: postId,
+      author,
+      ownerId: deviceId,
+      status: 'pending',
       category: document.getElementById('post-category').value,
       content: document.getElementById('post-content').value.trim(),
       createdAt: Date.now(),
@@ -700,13 +1011,15 @@
     };
     posts.unshift(newPost);
     savePosts();
-    setFilter('all');
     closePostModal();
+    renderFeed();
+    alert('تم إرسال منشورك بنجاح. سيظهر للجميع بعد موافقة إدارة المجتمع عليه.');
   }
 
   /* =====================================================================
      INIT
   ===================================================================== */
+  loadIdentities();
   loadPosts();
   renderFeed();
 </script>
