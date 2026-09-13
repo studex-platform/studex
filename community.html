@@ -387,6 +387,13 @@
   </div>
 </div>
 
+<!-- Firebase Firestore (نسخة compat) — يجب أن تُحمَّل قبل studex-store.js.
+     تأكد أن firebase-config.js و studex-store.js مرفوعان بجانب community.html. -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="studex-store.js"></script>
+
 <script>
   // ============ Mobile menu ============
   const menuBtn = document.getElementById('menu-btn');
@@ -551,14 +558,16 @@
   /* =====================================================================
      ADMIN SESSION (front-end gate only — see note at bottom of file)
   ===================================================================== */
-  const ADMIN_PASSCODE = 'studex-admin-2025'; // TODO: استبدلها بنظام مصادقة حقيقي قبل الإطلاق الفعلي
-  const ADMIN_SESSION_KEY = 'studex_admin_session';
-  function isAdmin() { return sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }
+  const ADMIN_PASSCODE = 'studex2026'; // موحّدة مع admin.html
+  const ADMIN_SESSION_KEY = 'studex_admin_authed'; // نفس مفتاح الجلسة المستخدم في admin.html
+  function isAdmin() { return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true'; }
 
   /* =====================================================================
      STATE / STORAGE
+     منشورات المجتمع الآن مخزَّنة على Firestore عبر StudexCommunity
+     (studex-store.js) بدلاً من localStorage، وتصل بشكل حي (onSnapshot)
+     لكل من يفتح هذه الصفحة أو لوحة تحكم الأدمن على أي جهاز.
   ===================================================================== */
-  const STORAGE_KEY = 'studex_community_posts_v1';
   let posts = [];
   let currentFilter = 'all';
 
@@ -568,7 +577,7 @@
       {
         id: cryptoId(), author: 'طالب هندسة برمجيات', category: 'courses', status: 'approved', ownerId: null,
         content: 'هل مادة هيكلة البيانات صعبة الفصل هذا؟\n\nحابب أعرف تجارب الطلاب اللي أخذوا المادة الفصل الماضي، وشو أفضل طريقة للمذاكرة قبل الامتحان النهائي.',
-        createdAt: now - 2 * 3600 * 1000, likes: 6, liked: false,
+        createdAt: now - 2 * 3600 * 1000, likes: 6,
         replies: [
           { id: cryptoId(), author: 'طالبة علوم حاسوب', content: 'المادة متوسطة الصعوبة، بس لازم تحل تمارين كل أسبوع أول بأول.', createdAt: now - 1.5 * 3600 * 1000,
             replies: [
@@ -580,13 +589,13 @@
       {
         id: cryptoId(), author: 'طالبة نظم معلومات', category: 'courses', status: 'approved', ownerId: null,
         content: 'أسلوب تدريس د. سامر في مادة الشبكات\n\nحد أخذ معه قبل؟ حابب أعرف شو أسلوب الامتحانات عنده وهل السلايدات كافية للمذاكرة.',
-        createdAt: now - 5 * 3600 * 1000, likes: 3, liked: false,
+        createdAt: now - 5 * 3600 * 1000, likes: 3,
         replies: [],
       },
       {
         id: cryptoId(), author: 'طالب هندسة حاسوب', category: 'experiences', status: 'approved', ownerId: null,
         content: 'تجربتي بالتدريب الصيفي في شركة تقنية محلية\n\nقضيت تدريب صيفي مدته شهرين، وحابب أشارك أهم الدروس اللي تعلمتها لأي طالب ناوي يقدم على تدريب مشابه.',
-        createdAt: now - 26 * 3600 * 1000, likes: 14, liked: false,
+        createdAt: now - 26 * 3600 * 1000, likes: 14,
         replies: [
           { id: cryptoId(), author: 'طالبة هندسة برمجيات', content: 'شكراً على المشاركة! ممكن تفاصيل أكثر عن طريقة التقديم؟', createdAt: now - 20 * 3600 * 1000, replies: [] },
           { id: cryptoId(), author: 'طالب أنظمة معلومات', content: 'استفدت كتير من هالبوست 🙏', createdAt: now - 10 * 3600 * 1000, replies: [] },
@@ -595,19 +604,65 @@
     ];
   }
 
-  function loadPosts() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      posts = raw ? JSON.parse(raw) : seedPosts();
-      if (!raw) savePosts();
-    } catch (e) {
-      console.warn('تعذر تحميل منشورات المجتمع', e);
-      posts = seedPosts();
+  // "أعجبني" حالة خاصة بهذا الجهاز فقط — لا تُخزَّن على Firestore حتى لا
+  // تظهر كأنها معجَب بها لدى كل الطلاب الآخرين بمجرد إعجاب شخص واحد بها.
+  const LIKED_IDS_KEY = 'studex_liked_posts_v1';
+  function loadLikedIds() {
+    try { return new Set(JSON.parse(localStorage.getItem(LIKED_IDS_KEY)) || []); }
+    catch (e) { return new Set(); }
+  }
+  function saveLikedIds() {
+    try { localStorage.setItem(LIKED_IDS_KEY, JSON.stringify([...likedIds])); } catch (e) {}
+  }
+  const likedIds = loadLikedIds();
+
+  // يدمج الحقول المحلية البحتة (liked الخاص بالجهاز، وحالة فتح/إغلاق قسم
+  // الردود) فوق النسخة الواردة من Firestore، حتى لا تُفقد أثناء كل تحديث حي.
+  function mergeLocalUIState(rawPosts) {
+    const openMap = {};
+    posts.forEach(p => { if (p._repliesOpen) openMap[p.id] = true; });
+    return rawPosts.map(p => ({
+      ...p,
+      replies: p.replies || [],
+      liked: likedIds.has(p.id),
+      _repliesOpen: !!openMap[p.id],
+    }));
+  }
+
+  function onCommunityUpdate(rawPosts) {
+    posts = mergeLocalUIState(rawPosts);
+    renderFeed();
+    if (isAdmin() && document.getElementById('admin-modal-backdrop').classList.contains('show')) {
+      renderAdminPanel();
     }
   }
-  function savePosts() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(posts)); }
-    catch (e) { console.warn('تعذر حفظ منشورات المجتمع', e); }
+
+  // ينظّف منشوراً من الحقول المحلية البحتة قبل إرساله إلى Firestore
+  function sanitizePostForSave(post) {
+    const clone = JSON.parse(JSON.stringify(post));
+    delete clone._repliesOpen;
+    delete clone.liked;
+    return clone;
+  }
+
+  async function persistReplies(post) {
+    try {
+      await StudexCommunity.updatePost(post.id, { replies: sanitizePostForSave(post).replies });
+    } catch (e) {
+      console.error('تعذر حفظ التعليقات', e);
+      alert('تعذر حفظ التغييرات، تحقق من اتصال الإنترنت.');
+    }
+  }
+
+  function initCommunitySync() {
+    // رسم فوري (0 ثانية انتظار) من آخر نسخة معروفة محلياً قبل اكتمال الاتصال
+    onCommunityUpdate(StudexCommunity.getCachedPosts());
+
+    StudexCommunity.seedIfEmpty(seedPosts())
+      .catch((e) => console.error('تعذر زرع بيانات المجتمع الأولية', e))
+      .finally(() => {
+        StudexCommunity.subscribe(onCommunityUpdate);
+      });
   }
 
   /* =====================================================================
@@ -770,13 +825,16 @@
   /* =====================================================================
      OWNER: DELETE OWN POST (لا يوجد تعديل، حذف فقط)
   ===================================================================== */
-  function deleteOwnPost(id) {
+  async function deleteOwnPost(id) {
     const post = posts.find(p => p.id === id);
     if (!post || !isOwnerOfPost(post)) return;
     if (!confirm('هل أنت متأكد من حذف منشورك؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-    posts = posts.filter(p => p.id !== id);
-    savePosts();
-    renderFeed();
+    try {
+      await StudexCommunity.deletePost(id);
+    } catch (e) {
+      console.error('تعذر حذف المنشور', e);
+      alert('تعذر حذف المنشور، تحقق من اتصال الإنترنت.');
+    }
   }
 
   /* =====================================================================
@@ -790,7 +848,7 @@
         alert('كلمة المرور غير صحيحة.');
         return;
       }
-      sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+      sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
       renderFeed(); // لإظهار أزرار حذف المسؤول على الفور
     }
     renderAdminPanel();
@@ -837,29 +895,34 @@
     }).join('');
   }
 
-  function approvePost(id) {
-    const post = posts.find(p => p.id === id);
-    if (!post) return;
-    post.status = 'approved';
-    savePosts();
-    renderAdminPanel();
-    renderFeed();
+  async function approvePost(id) {
+    try {
+      await StudexCommunity.updatePost(id, { status: 'approved' });
+    } catch (e) {
+      console.error('تعذر اعتماد المنشور', e);
+      alert('تعذر اعتماد المنشور، تحقق من اتصال الإنترنت.');
+    }
   }
 
-  function rejectPost(id) {
+  async function rejectPost(id) {
     if (!confirm('هل تريد رفض هذا المنشور وحذفه نهائياً؟')) return;
-    posts = posts.filter(p => p.id !== id);
-    savePosts();
-    renderAdminPanel();
-    renderFeed();
+    try {
+      await StudexCommunity.deletePost(id);
+    } catch (e) {
+      console.error('تعذر رفض المنشور', e);
+      alert('تعذر رفض المنشور، تحقق من اتصال الإنترنت.');
+    }
   }
 
-  function adminDeletePost(id) {
+  async function adminDeletePost(id) {
     if (!isAdmin()) return;
     if (!confirm('حذف هذا المنشور نهائياً بصفتك المسؤول؟')) return;
-    posts = posts.filter(p => p.id !== id);
-    savePosts();
-    renderFeed();
+    try {
+      await StudexCommunity.deletePost(id);
+    } catch (e) {
+      console.error('تعذر حذف المنشور', e);
+      alert('تعذر حذف المنشور، تحقق من اتصال الإنترنت.');
+    }
   }
 
   // يبحث عن تعليق ضمن شجرة الردود ويحذفه أينما كان (حتى لو رداً متداخلاً)
@@ -875,26 +938,35 @@
     return false;
   }
 
-  function adminDeleteReply(postId, replyId) {
+  async function adminDeleteReply(postId, replyId) {
     if (!isAdmin()) return;
     if (!confirm('حذف هذا التعليق نهائياً بصفتك المسؤول؟')) return;
     const post = posts.find(p => p.id === postId);
     if (!post) return;
     removeReplyRecursive(post.replies, replyId);
-    savePosts();
     renderFeed();
+    await persistReplies(post);
   }
 
   /* =====================================================================
      ACTIONS
   ===================================================================== */
-  function toggleLike(id) {
+  async function toggleLike(id) {
     const post = posts.find(p => p.id === id);
     if (!post) return;
-    post.liked = !post.liked;
-    post.likes += post.liked ? 1 : -1;
-    savePosts();
+    const willLike = !post.liked;
+    if (willLike) likedIds.add(id); else likedIds.delete(id);
+    saveLikedIds();
+    // تحديث تفاؤلي فوري للواجهة قبل تأكيد الخادم؛ سيصحّح الاستماع الحي
+    // العدّاد النهائي تلقائياً فور وصول رد Firestore.
+    post.liked = willLike;
+    post.likes = Math.max(0, (post.likes || 0) + (willLike ? 1 : -1));
     renderFeed();
+    try {
+      await StudexCommunity.incrementLikes(id, willLike ? 1 : -1);
+    } catch (e) {
+      console.error('تعذر تحديث الإعجاب', e);
+    }
   }
 
   function toggleReplies(id) {
@@ -930,7 +1002,7 @@
 
   // parentReplyId = null يعني تعليق جديد مباشرة على المنشور
   // parentReplyId = معرّف تعليق يعني رد متداخل تحت ذلك التعليق تحديداً
-  function handleReplySubmit(e, postId, parentReplyId) {
+  async function handleReplySubmit(e, postId, parentReplyId) {
     e.preventDefault();
     const form = e.target;
     const input = form.querySelector('input[type="text"]:not([data-role="identity-name-input"])');
@@ -962,8 +1034,8 @@
 
     post._repliesOpen = true;
     activeReplyTarget = null;
-    savePosts();
     renderFeed();
+    await persistReplies(post);
   }
 
   /* =====================================================================
@@ -986,7 +1058,7 @@
     if (e.target.id === 'modal-backdrop') closePostModal();
   });
 
-  function handleAddPost(e) {
+  async function handleAddPost(e) {
     e.preventDefault();
     const form = e.target;
     const postId = cryptoId();
@@ -1006,25 +1078,25 @@
       content: document.getElementById('post-content').value.trim(),
       createdAt: Date.now(),
       likes: 0,
-      liked: false,
       replies: [],
     };
-    posts.unshift(newPost);
-    savePosts();
+
     closePostModal();
-    renderFeed();
-    alert('تم إرسال منشورك بنجاح. سيظهر للجميع بعد موافقة إدارة المجتمع عليه.');
+    try {
+      await StudexCommunity.addPost(newPost);
+      alert('تم إرسال منشورك بنجاح. سيظهر للجميع بعد موافقة إدارة المجتمع عليه.');
+    } catch (e) {
+      console.error('تعذر نشر المنشور', e);
+      alert('تعذر إرسال منشورك. تحقق من اتصال الإنترنت وحاول مرة أخرى.');
+    }
   }
 
   /* =====================================================================
      INIT
   ===================================================================== */
   loadIdentities();
-  loadPosts();
-  renderFeed();
+  initCommunitySync();
 </script>
-
-<script type="module" src="firebase-config.js"></script>
 
 </body>
 </html>

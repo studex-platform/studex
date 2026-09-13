@@ -25,6 +25,9 @@
         .field-group.active { display: block; }
         .mode-toggle { transition: all .15s ease; }
         .mode-toggle.active { background: #0f172a; color: #fff; }
+        .main-tab-btn { color: #64748b; }
+        .main-tab-btn.active { background: #0f172a; color: #fff; }
+        .community-filter-chip.active { background: #0f172a; color: #fff; border-color: #0f172a; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -86,7 +89,20 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- ============ MAIN TABS ============ -->
+    <div class="max-w-7xl mx-auto px-4 pt-6 w-full">
+        <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 shadow-sm w-fit">
+            <button id="tabBtnContent" onclick="switchMainTab('content')" class="main-tab-btn active px-4 py-2 rounded-xl text-sm font-bold transition-colors">
+                إدارة المحتوى
+            </button>
+            <button id="tabBtnCommunity" onclick="switchMainTab('community')" class="main-tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2">
+                إدارة مجتمع StudeX
+                <span id="pendingBadge" class="hidden bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center">0</span>
+            </button>
+        </div>
+    </div>
+
+    <main id="panelContent" class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- ============ ADD / EDIT CONTENT FORM ============ -->
         <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 h-fit lg:sticky lg:top-6">
@@ -204,23 +220,38 @@
             <!-- Content list grouped by hierarchy -->
             <div id="contentList" class="space-y-5"></div>
 
-            <!-- Manage Community Posts -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 class="font-bold text-navy-900">إدارة منشورات المنتدى</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
-                        <div>
-                            <span class="font-semibold text-slate-800 block">كيف طبيعة أسئلة الفاينل لمادة الدوائر؟</span>
-                            <span class="text-xs text-slate-400">بواسطة: طالب هندسة</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold">قبول</button>
-                            <button class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold">حذف</button>
-                        </div>
-                    </div>
+        </div>
+
+    </main>
+
+    <!-- ============ COMMUNITY MODERATION PANEL ============ -->
+    <main id="panelCommunity" class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full hidden space-y-6">
+
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl p-3 leading-relaxed flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            مزامنة حية عبر Firestore: أي منشور أو تعليق من أي جهاز يظهر هنا فوراً بدون الحاجة لتحديث الصفحة.
+        </div>
+
+        <!-- Pending posts -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h2 class="font-bold text-lg text-navy-900">منشورات بانتظار الموافقة</h2>
+                <span id="pendingCount" class="text-xs font-bold text-slate-400">0</span>
+            </div>
+            <div id="pendingList" class="space-y-3"></div>
+        </div>
+
+        <!-- All approved posts (admin delete + comment moderation) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b pb-3 flex-wrap gap-3">
+                <h2 class="font-bold text-lg text-navy-900">كل منشورات المجتمع المعتمدة</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button data-cfilter="all" onclick="setCommunityFilter('all')" class="community-filter-chip active px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200">الكل</button>
+                    <button data-cfilter="courses" onclick="setCommunityFilter('courses')" class="community-filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-500">استفسارات المواد</button>
+                    <button data-cfilter="experiences" onclick="setCommunityFilter('experiences')" class="community-filter-chip px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 text-slate-500">تجارب طلابية</button>
                 </div>
             </div>
-
+            <div id="approvedList" class="space-y-3"></div>
         </div>
 
     </main>
@@ -573,6 +604,238 @@
         StudexStore.ready.then(() => {
             renderStats();
             setFilter('all'); // يستدعي renderContentList() داخلياً
+        });
+
+        /* ================= MAIN TABS ================= */
+        function switchMainTab(tab) {
+            document.getElementById('tabBtnContent').classList.toggle('active', tab === 'content');
+            document.getElementById('tabBtnCommunity').classList.toggle('active', tab === 'community');
+            document.getElementById('panelContent').classList.toggle('hidden', tab !== 'content');
+            document.getElementById('panelCommunity').classList.toggle('hidden', tab !== 'community');
+            if (tab === 'community') renderCommunityPanel();
+        }
+
+        /* =====================================================================
+           COMMUNITY MODERATION
+           تُقرأ/تُكتب الآن عبر StudexCommunity (Firestore) بدلاً من localStorage،
+           لذلك تظهر هنا منشورات وتعليقات كل الطلاب من أي جهاز، بشكل حي
+           (onSnapshot) دون الحاجة لتحديث الصفحة يدوياً.
+        ===================================================================== */
+        let communityFilter = 'all';
+        let communityPostsCache = [];
+
+        const communityCategoryMeta = {
+            courses:     { name: 'استفسارات المواد', badge: 'bg-blue-50 text-blue-600 border-blue-200' },
+            experiences: { name: 'تجارب طلابية', badge: 'bg-amber-50 text-amber-600 border-amber-200' },
+        };
+
+        function communityFormatTime(ts) {
+            const diffMs = Date.now() - (ts || 0);
+            const min = Math.floor(diffMs / 60000);
+            if (min < 1) return 'الآن';
+            if (min < 60) return `منذ ${min} دقيقة`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `منذ ${hr} ساعة`;
+            const day = Math.floor(hr / 24);
+            return `منذ ${day} يوم`;
+        }
+
+        function countCommunityReplies(replies) {
+            if (!replies || !replies.length) return 0;
+            return replies.reduce((acc, r) => acc + 1 + countCommunityReplies(r.replies), 0);
+        }
+
+        function setCommunityFilter(f) {
+            communityFilter = f;
+            document.querySelectorAll('.community-filter-chip').forEach(btn => {
+                const active = btn.dataset.cfilter === f;
+                btn.classList.toggle('active', active);
+                btn.classList.toggle('text-slate-500', !active);
+            });
+            renderCommunityPanel();
+        }
+
+        function updatePendingBadge(count) {
+            const badge = document.getElementById('pendingBadge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        }
+
+        function renderCommunityPanel() {
+            const posts = communityPostsCache;
+
+            /* ---- Pending ---- */
+            const pending = posts.filter(p => p.status === 'pending').sort((a, b) => b.createdAt - a.createdAt);
+            document.getElementById('pendingCount').textContent = pending.length;
+            updatePendingBadge(pending.length);
+
+            const pendingList = document.getElementById('pendingList');
+            if (!pending.length) {
+                pendingList.innerHTML = `<p class="text-sm text-slate-400 text-center py-8">لا توجد منشورات بانتظار المراجعة حالياً.</p>`;
+            } else {
+                pendingList.innerHTML = pending.map(post => {
+                    const meta = communityCategoryMeta[post.category] || communityCategoryMeta.courses;
+                    return `
+                        <div class="border border-slate-200 rounded-2xl p-5">
+                            <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                                <div class="flex items-center gap-2">
+                                    <p class="font-semibold text-sm text-slate-800">${escapeHTML(post.author)}</p>
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-full border ${meta.badge}">${meta.name}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400">${communityFormatTime(post.createdAt)}</p>
+                            </div>
+                            <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-4">${escapeHTML(post.content)}</p>
+                            <div class="flex items-center gap-3">
+                                <button onclick="approveCommunityPost('${post.id}')" class="flex-1 font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-colors">
+                                    موافقة / Approve
+                                </button>
+                                <button onclick="rejectCommunityPost('${post.id}')" class="flex-1 font-bold text-sm bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-4 py-2.5 rounded-xl transition-colors">
+                                    رفض / حذف
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            /* ---- Approved (admin delete post/comment) ---- */
+            const approved = posts
+                .filter(p => p.status === 'approved')
+                .filter(p => communityFilter === 'all' || p.category === communityFilter)
+                .sort((a, b) => b.createdAt - a.createdAt);
+
+            const approvedList = document.getElementById('approvedList');
+            if (!approved.length) {
+                approvedList.innerHTML = `<p class="text-sm text-slate-400 text-center py-8">لا توجد منشورات معتمدة ضمن هذا التصنيف.</p>`;
+                return;
+            }
+
+            approvedList.innerHTML = approved.map(post => {
+                const meta = communityCategoryMeta[post.category] || communityCategoryMeta.courses;
+                const repliesCount = countCommunityReplies(post.replies);
+                return `
+                    <div class="border border-slate-200 rounded-2xl p-5">
+                        <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <p class="font-semibold text-sm text-slate-800">${escapeHTML(post.author)}</p>
+                                <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-bold rounded-full border ${meta.badge}">${meta.name}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[11px] text-slate-400">${communityFormatTime(post.createdAt)}</p>
+                                <button onclick="adminDeleteCommunityPost('${post.id}')" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold hover:bg-rose-100">حذف المنشور</button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line mb-3">${escapeHTML(post.content)}</p>
+                        ${repliesCount ? `
+                            <button onclick="toggleCommunityComments('${post.id}')" id="ctoggle-${post.id}" class="text-xs font-semibold text-accent hover:underline mb-2">
+                                عرض التعليقات (${repliesCount})
+                            </button>
+                            <div id="cwrap-${post.id}" class="hidden mt-2 pt-3 border-t border-slate-100 space-y-2">
+                                ${renderCommunityCommentsTree(post.id, post.replies)}
+                            </div>
+                        ` : `<p class="text-xs text-slate-300">لا توجد تعليقات على هذا المنشور.</p>`}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCommunityCommentsTree(postId, replies, depth = 0) {
+            if (!replies || !replies.length) return '';
+            const indent = depth > 0 ? 'ms-6' : '';
+            return replies.map(r => `
+                <div class="${indent}">
+                    <div class="flex items-start justify-between gap-3 bg-slate-50 rounded-xl p-3">
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold text-slate-700">${escapeHTML(r.author)}</p>
+                            <p class="text-xs text-slate-500 mt-0.5">${escapeHTML(r.content)}</p>
+                        </div>
+                        <button onclick="adminDeleteCommunityReply('${postId}','${r.id}')" class="shrink-0 px-2 py-1 bg-rose-50 text-rose-600 rounded-lg text-[11px] font-semibold hover:bg-rose-100">حذف</button>
+                    </div>
+                    ${r.replies && r.replies.length ? `<div class="mt-2 space-y-2">${renderCommunityCommentsTree(postId, r.replies, depth + 1)}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function toggleCommunityComments(postId) {
+            const wrap = document.getElementById('cwrap-' + postId);
+            const btn = document.getElementById('ctoggle-' + postId);
+            if (!wrap) return;
+            const isHidden = wrap.classList.toggle('hidden');
+            if (btn) btn.textContent = btn.textContent.replace(isHidden ? 'إخفاء' : 'عرض', isHidden ? 'عرض' : 'إخفاء');
+        }
+
+        async function approveCommunityPost(id) {
+            try {
+                await StudexCommunity.updatePost(id, { status: 'approved' });
+            } catch (e) {
+                console.error('تعذر اعتماد المنشور', e);
+                alert('تعذر اعتماد المنشور، تحقق من اتصال الإنترنت.');
+            }
+        }
+
+        async function rejectCommunityPost(id) {
+            if (!confirm('هل تريد رفض هذا المنشور وحذفه نهائياً؟')) return;
+            try {
+                await StudexCommunity.deletePost(id);
+            } catch (e) {
+                console.error('تعذر رفض المنشور', e);
+                alert('تعذر رفض المنشور، تحقق من اتصال الإنترنت.');
+            }
+        }
+
+        async function adminDeleteCommunityPost(id) {
+            if (!confirm('حذف هذا المنشور نهائياً بصفتك المسؤول؟')) return;
+            try {
+                await StudexCommunity.deletePost(id);
+            } catch (e) {
+                console.error('تعذر حذف المنشور', e);
+                alert('تعذر حذف المنشور، تحقق من اتصال الإنترنت.');
+            }
+        }
+
+        function removeCommunityReplyRecursive(replies, id) {
+            const index = replies.findIndex(r => r.id === id);
+            if (index !== -1) {
+                replies.splice(index, 1);
+                return true;
+            }
+            for (const r of replies) {
+                if (r.replies && r.replies.length && removeCommunityReplyRecursive(r.replies, id)) return true;
+            }
+            return false;
+        }
+
+        async function adminDeleteCommunityReply(postId, replyId) {
+            if (!confirm('حذف هذا التعليق نهائياً بصفتك المسؤول؟')) return;
+            const post = communityPostsCache.find(p => p.id === postId);
+            if (!post) return;
+            const replies = JSON.parse(JSON.stringify(post.replies || []));
+            removeCommunityReplyRecursive(replies, replyId);
+            try {
+                await StudexCommunity.updatePost(postId, { replies });
+            } catch (e) {
+                console.error('تعذر حذف التعليق', e);
+                alert('تعذر حذف التعليق، تحقق من اتصال الإنترنت.');
+            }
+        }
+
+        // مزامنة حية: يُستدعى فوراً عند تحميل الصفحة (من الكاش المحلي) ثم مع كل
+        // تغيير وارد من Firestore (منشور جديد، موافقة، حذف تعليق...) من أي جهاز.
+        communityPostsCache = StudexCommunity.getCachedPosts();
+        updatePendingBadge(communityPostsCache.filter(p => p.status === 'pending').length);
+
+        StudexCommunity.subscribe((posts) => {
+            communityPostsCache = posts;
+            updatePendingBadge(posts.filter(p => p.status === 'pending').length);
+            if (!document.getElementById('panelCommunity').classList.contains('hidden')) {
+                renderCommunityPanel();
+            }
         });
     </script>
 

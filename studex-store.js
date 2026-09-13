@@ -366,6 +366,137 @@
     ready: migrateLegacyCardKeys().catch(() => {})
   };
 
+  /* =====================================================================
+     منشورات مجتمع الطلاب (StudeX Community)
+     تُخزَّن الآن في Firestore بدلاً من localStorage، كي تكون البيانات حية
+     ومشتركة بين جميع الأجهزة: منشور طالب من جهازه يظهر فوراً لكل الطلاب
+     الآخرين، ويظهر أيضاً بشكل صحيح في لوحة تحكم الأدمن بغض النظر عن الجهاز
+     الذي فُتحت منه — بعكس localStorage الذي يبقى محصوراً بمتصفح واحد فقط.
+  ===================================================================== */
+  const COMMUNITY_COLLECTION = 'studex_community_posts';
+  const COMMUNITY_CACHE_KEY = 'studex_community_cache_v1';
+
+  // كاش محلي فوري (0 ثانية انتظار) لعرض آخر نسخة معروفة من المنشورات فور
+  // فتح الصفحة، بينما يتم الاتصال بالمزامنة الحية عبر Firestore بالخلفية.
+  let communityCache = [];
+  try {
+    const raw = localStorage.getItem(COMMUNITY_CACHE_KEY);
+    communityCache = raw ? JSON.parse(raw) : [];
+  } catch (e) { communityCache = []; }
+
+  function saveCommunityCache(posts) {
+    communityCache = posts;
+    try { localStorage.setItem(COMMUNITY_CACHE_KEY, JSON.stringify(posts)); } catch (e) {}
+  }
+
+  function getCachedCommunityPosts() {
+    return communityCache;
+  }
+
+  async function fetchCommunityPosts() {
+    try {
+      const db = getDb();
+      const snap = await db.collection(COMMUNITY_COLLECTION).get();
+      const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      saveCommunityCache(posts);
+      return posts;
+    } catch (e) {
+      console.error('[StudexCommunity] فشل تحميل منشورات المجتمع', e);
+      return communityCache;
+    }
+  }
+
+  // يفتح استماعاً حياً (onSnapshot) على كل منشورات المجتمع؛ يستدعي callback
+  // فوراً بأي تغيير (منشور جديد، موافقة، رفض، حذف تعليق...) وارد من أي جهاز،
+  // بما فيها التغييرات المحلية المُعلَّقة (pending writes) لإحساس فوري بلا تأخير.
+  // يرجع دالة لإلغاء الاشتراك عند مغادرة الصفحة.
+  function subscribeCommunityPosts(callback) {
+    try {
+      const db = getDb();
+      return db.collection(COMMUNITY_COLLECTION).onSnapshot((snap) => {
+        const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        saveCommunityCache(posts);
+        callback(posts);
+      }, (err) => {
+        console.error('[StudexCommunity] خطأ في المزامنة الحية لمنشورات المجتمع', err);
+      });
+    } catch (e) {
+      console.error('[StudexCommunity] تعذر بدء المزامنة الحية', e);
+      return () => {};
+    }
+  }
+
+  async function addCommunityPost(post) {
+    const db = getDb();
+    const id = post.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+    const record = normalizeItem({ ...post });
+    delete record.id;
+    await db.collection(COMMUNITY_COLLECTION).doc(id).set(record);
+    const newPost = { id, ...record };
+    saveCommunityCache([newPost, ...communityCache.filter((p) => p.id !== id)]);
+    return newPost;
+  }
+
+  // تحديث جزئي (merge) لحقول منشور موجود — يُستخدم للموافقة/الرفض، أو
+  // لحفظ شجرة الردود كاملة بعد إضافة/حذف تعليق، دون المساس ببقية الحقول.
+  async function updateCommunityPost(id, patch) {
+    const db = getDb();
+    const normalizedPatch = normalizeItem({ ...patch });
+    await db.collection(COMMUNITY_COLLECTION).doc(id).update(normalizedPatch);
+    const updated = communityCache.map((p) => (p.id === id ? { ...p, ...normalizedPatch } : p));
+    saveCommunityCache(updated);
+    return updated.find((p) => p.id === id) || null;
+  }
+
+  async function deleteCommunityPost(id) {
+    const db = getDb();
+    await db.collection(COMMUNITY_COLLECTION).doc(id).delete();
+    saveCommunityCache(communityCache.filter((p) => p.id !== id));
+  }
+
+  // زيادة/إنقاص عدّاد الإعجابات بشكل ذرّي (atomic) عبر الخادم لتفادي تضارب
+  // التحديثات المتزامنة من عدة طلاب في نفس اللحظة.
+  async function incrementCommunityLikes(id, delta) {
+    const db = getDb();
+    const inc = global.firebase.firestore.FieldValue.increment(delta);
+    await db.collection(COMMUNITY_COLLECTION).doc(id).update({ likes: inc });
+    const updated = communityCache.map((p) => (p.id === id ? { ...p, likes: Math.max(0, (p.likes || 0) + delta) } : p));
+    saveCommunityCache(updated);
+  }
+
+  // يزرع بيانات تجريبية أولية مرة واحدة فقط إن كانت المجموعة فارغة بالكامل
+  // على Firestore (وليس فقط فارغة محلياً)، لتفادي تكرار الزرع من كل جهاز.
+  async function seedCommunityIfEmpty(seedList) {
+    try {
+      const db = getDb();
+      const snap = await db.collection(COMMUNITY_COLLECTION).limit(1).get();
+      if (!snap.empty) return;
+      const batch = db.batch();
+      seedList.forEach((p) => {
+        const record = normalizeItem({ ...p });
+        const id = record.id;
+        delete record.id;
+        const ref = db.collection(COMMUNITY_COLLECTION).doc(id);
+        batch.set(ref, record);
+      });
+      await batch.commit();
+      await fetchCommunityPosts();
+    } catch (e) {
+      console.error('[StudexCommunity] فشل زرع بيانات المجتمع الأولية', e);
+    }
+  }
+
+  global.StudexCommunity = {
+    getCachedPosts: getCachedCommunityPosts,
+    fetchPosts: fetchCommunityPosts,
+    subscribe: subscribeCommunityPosts,
+    addPost: addCommunityPost,
+    updatePost: updateCommunityPost,
+    deletePost: deleteCommunityPost,
+    incrementLikes: incrementCommunityLikes,
+    seedIfEmpty: seedCommunityIfEmpty,
+  };
+
   // مزامنة شاملة هادئة بالخلفية عند فتح الصفحة لتحديث الكاش المحلي بأحدث بيانات الـ Firestore
   setTimeout(() => {
     try {
