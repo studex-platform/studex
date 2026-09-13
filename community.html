@@ -116,9 +116,6 @@
       </nav>
 
       <div class="hidden lg:flex items-center gap-3">
-        <button class="font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors px-3 py-2">
-          تسجيل الدخول
-        </button>
         <button class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20">
           لوحة التحكم
         </button>
@@ -139,7 +136,6 @@
         <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
         <a href="career.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
         <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
-          <button class="font-display font-semibold text-sm text-slate-600 border border-slate-200 px-4 py-2.5 rounded-lg">تسجيل الدخول</button>
           <button class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg">لوحة التحكم</button>
         </div>
       </nav>
@@ -340,14 +336,8 @@
       </div>
 
       <div>
-        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">العنوان</label>
-        <input type="text" id="post-title" required placeholder="مثال: هل مادة الشبكات صعبة مع د. سامر؟"
-          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
-      </div>
-
-      <div>
-        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">التفاصيل</label>
-        <textarea id="post-content" required rows="4" placeholder="اكتب سؤالك أو شارك تجربتك بالتفصيل..."
+        <label class="block text-xs font-display font-semibold text-slate-500 mb-2">التفاصيل / المحتوى</label>
+        <textarea id="post-content" required rows="5" placeholder="اكتب سؤالك أو شارك تجربتك بالتفصيل..."
           class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors resize-none"></textarea>
       </div>
 
@@ -411,6 +401,10 @@
     const trimmed = (name || 'طالب').trim();
     return trimmed.charAt(0);
   }
+  // يحسب عدد كل التعليقات والردود المتداخلة ضمن منشور معيّن
+  function countReplies(replies) {
+    return replies.reduce((total, r) => total + 1 + countReplies(r.replies || []), 0);
+  }
   function formatRelativeTime(ts) {
     const diffMs = Date.now() - ts;
     const min = Math.floor(diffMs / 60000);
@@ -434,28 +428,29 @@
     return [
       {
         id: cryptoId(), author: 'طالب هندسة برمجيات', category: 'courses',
-        title: 'هل مادة هيكلة البيانات صعبة الفصل هذا؟',
-        content: 'حابب أعرف تجارب الطلاب اللي أخذوا المادة الفصل الماضي، وشو أفضل طريقة للمذاكرة قبل الامتحان النهائي.',
+        content: 'هل مادة هيكلة البيانات صعبة الفصل هذا؟\n\nحابب أعرف تجارب الطلاب اللي أخذوا المادة الفصل الماضي، وشو أفضل طريقة للمذاكرة قبل الامتحان النهائي.',
         createdAt: now - 2 * 3600 * 1000, likes: 6, liked: false,
         replies: [
-          { id: cryptoId(), author: 'طالبة علوم حاسوب', content: 'المادة متوسطة الصعوبة، بس لازم تحل تمارين كل أسبوع أول بأول.', createdAt: now - 1.5 * 3600 * 1000 },
+          { id: cryptoId(), author: 'طالبة علوم حاسوب', content: 'المادة متوسطة الصعوبة، بس لازم تحل تمارين كل أسبوع أول بأول.', createdAt: now - 1.5 * 3600 * 1000,
+            replies: [
+              { id: cryptoId(), author: 'طالب هندسة برمجيات', content: 'تمام، شكراً! رح أبدأ فيها من الأسبوع الياي.', createdAt: now - 1.2 * 3600 * 1000, replies: [] },
+            ],
+          },
         ],
       },
       {
         id: cryptoId(), author: 'طالبة نظم معلومات', category: 'courses',
-        title: 'أسلوب تدريس د. سامر في مادة الشبكات',
-        content: 'حد أخذ معه قبل؟ حابب أعرف شو أسلوب الامتحانات عنده وهل السلايدات كافية للمذاكرة.',
+        content: 'أسلوب تدريس د. سامر في مادة الشبكات\n\nحد أخذ معه قبل؟ حابب أعرف شو أسلوب الامتحانات عنده وهل السلايدات كافية للمذاكرة.',
         createdAt: now - 5 * 3600 * 1000, likes: 3, liked: false,
         replies: [],
       },
       {
         id: cryptoId(), author: 'طالب هندسة حاسوب', category: 'experiences',
-        title: 'تجربتي بالتدريب الصيفي في شركة تقنية محلية',
-        content: 'قضيت تدريب صيفي مدته شهرين، وحابب أشارك أهم الدروس اللي تعلمتها لأي طالب ناوي يقدم على تدريب مشابه.',
+        content: 'تجربتي بالتدريب الصيفي في شركة تقنية محلية\n\nقضيت تدريب صيفي مدته شهرين، وحابب أشارك أهم الدروس اللي تعلمتها لأي طالب ناوي يقدم على تدريب مشابه.',
         createdAt: now - 26 * 3600 * 1000, likes: 14, liked: false,
         replies: [
-          { id: cryptoId(), author: 'طالبة هندسة برمجيات', content: 'شكراً على المشاركة! ممكن تفاصيل أكثر عن طريقة التقديم؟', createdAt: now - 20 * 3600 * 1000 },
-          { id: cryptoId(), author: 'طالب أنظمة معلومات', content: 'استفدت كتير من هالبوست 🙏', createdAt: now - 10 * 3600 * 1000 },
+          { id: cryptoId(), author: 'طالبة هندسة برمجيات', content: 'شكراً على المشاركة! ممكن تفاصيل أكثر عن طريقة التقديم؟', createdAt: now - 20 * 3600 * 1000, replies: [] },
+          { id: cryptoId(), author: 'طالب أنظمة معلومات', content: 'استفدت كتير من هالبوست 🙏', createdAt: now - 10 * 3600 * 1000, replies: [] },
         ],
       },
     ];
@@ -528,8 +523,7 @@
           <span class="inline-flex items-center px-2.5 py-1 text-xs font-display font-semibold rounded-full border ${meta.badge} shrink-0">${meta.name}</span>
         </div>
 
-        <h3 class="font-display font-bold text-[15px] sm:text-base text-navy mb-1.5">${escapeHTML(post.title)}</h3>
-        <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(post.content)}</p>
+        <p class="text-[15px] text-slate-700 leading-relaxed whitespace-pre-line">${escapeHTML(post.content)}</p>
 
         <div class="flex items-center gap-5 mt-4 pt-4 border-t border-slate-100">
           <button onclick="toggleLike('${post.id}')" class="like-btn ${post.liked ? 'liked' : ''} flex items-center gap-1.5 text-slate-500 hover:text-accent transition-colors">
@@ -538,16 +532,16 @@
           </button>
           <button onclick="toggleReplies('${post.id}')" class="flex items-center gap-1.5 text-slate-500 hover:text-accent transition-colors">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H18.5C19.3284 5 20 5.67157 20 6.5V15.5C20 16.3284 19.3284 17 18.5 17H9L5 20.5V17H5.5C4.67157 17 4 16.3284 4 15.5V6.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-            <span class="font-display font-semibold text-xs">${post.replies.length} إجابة</span>
+            <span class="font-display font-semibold text-xs">${countReplies(post.replies)} إجابة</span>
             <svg class="chevron ${chevronRotated}" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
 
         <div class="replies-panel ${repliesOpen}">
           <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
-            ${post.replies.map(replyHTML).join('') || `<p class="text-xs text-slate-300 font-display text-center py-2">لا توجد إجابات بعد، كن أول من يجيب</p>`}
+            ${post.replies.map(r => replyHTML(r, post.id)).join('') || `<p class="text-xs text-slate-300 font-display text-center py-2">لا توجد إجابات بعد، كن أول من يجيب</p>`}
 
-            <form onsubmit="handleAddReply(event, '${post.id}')" class="flex items-center gap-2 mt-1">
+            <form onsubmit="handleReplySubmit(event, '${post.id}', null)" class="flex items-center gap-2 mt-1">
               <input type="text" required placeholder="اكتب إجابتك أو تعليقك..."
                 class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
               <button type="submit" class="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
@@ -560,19 +554,47 @@
     `;
   }
 
-  function replyHTML(reply) {
+  function replyHTML(reply, postId, depth = 0) {
     const avatar = avatarStyleFor(reply.author);
+    const indentClass = depth > 0 ? 'ms-9' : '';
+    const isReplyBoxOpen = !!(activeReplyTarget && activeReplyTarget.postId === postId && activeReplyTarget.replyId === reply.id);
+    const childReplies = reply.replies || [];
+
     return `
-      <div class="flex items-start gap-2.5">
-        <span class="w-8 h-8 rounded-full ${avatar.bg} ${avatar.text} flex items-center justify-center font-display font-bold text-xs shrink-0">
-          ${initialsFor(reply.author)}
-        </span>
-        <div class="bg-surface rounded-xl px-3.5 py-2.5 flex-1">
-          <div class="flex items-center justify-between gap-2 mb-0.5">
-            <p class="font-display font-semibold text-xs text-navy">${escapeHTML(reply.author)}</p>
-            <p class="text-[11px] text-slate-400">${formatRelativeTime(reply.createdAt)}</p>
+      <div class="${indentClass}">
+        <div class="flex items-start gap-2.5">
+          <span class="w-8 h-8 rounded-full ${avatar.bg} ${avatar.text} flex items-center justify-center font-display font-bold text-xs shrink-0">
+            ${initialsFor(reply.author)}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="bg-surface rounded-xl px-3.5 py-2.5">
+              <div class="flex items-center justify-between gap-2 mb-0.5">
+                <p class="font-display font-semibold text-xs text-navy">${escapeHTML(reply.author)}</p>
+                <p class="text-[11px] text-slate-400">${formatRelativeTime(reply.createdAt)}</p>
+              </div>
+              <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(reply.content)}</p>
+            </div>
+
+            <button onclick="toggleReplyBox('${postId}', '${reply.id}')" class="mt-1.5 text-[11px] font-display font-semibold text-slate-400 hover:text-accent transition-colors px-1">
+              ${isReplyBoxOpen ? 'إلغاء الرد' : 'رد'}
+            </button>
+
+            ${isReplyBoxOpen ? `
+              <form onsubmit="handleReplySubmit(event, '${postId}', '${reply.id}')" class="flex items-center gap-2 mt-2">
+                <input type="text" required autofocus placeholder="اكتب ردك على ${escapeHTML(reply.author)}..."
+                  class="flex-1 bg-surface border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+                <button type="submit" class="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-navy hover:bg-accent text-white transition-colors" aria-label="إرسال">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)"/></svg>
+                </button>
+              </form>
+            ` : ''}
+
+            ${childReplies.length ? `
+              <div class="flex flex-col gap-3 mt-3">
+                ${childReplies.map(child => replyHTML(child, postId, depth + 1)).join('')}
+              </div>
+            ` : ''}
           </div>
-          <p class="text-sm text-slate-600 leading-relaxed">${escapeHTML(reply.content)}</p>
         </div>
       </div>
     `;
@@ -597,7 +619,33 @@
     renderFeed();
   }
 
-  function handleAddReply(e, postId) {
+  // يبحث عن تعليق (أو رد متداخل) بالمعرّف ضمن شجرة الردود بأكملها
+  function findReplyRecursive(replies, id) {
+    for (const r of replies) {
+      if (r.id === id) return r;
+      if (r.replies && r.replies.length) {
+        const found = findReplyRecursive(r.replies, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // معرّف الرد الذي يوجد تحته صندوق كتابة ردّ مفتوح حالياً (رد واحد مفتوح بكل مرة)
+  let activeReplyTarget = null; // { postId, replyId } أو null
+
+  function toggleReplyBox(postId, replyId) {
+    if (activeReplyTarget && activeReplyTarget.postId === postId && activeReplyTarget.replyId === replyId) {
+      activeReplyTarget = null;
+    } else {
+      activeReplyTarget = { postId, replyId };
+    }
+    renderFeed();
+  }
+
+  // parentReplyId = null يعني تعليق جديد مباشرة على المنشور
+  // parentReplyId = معرّف تعليق يعني رد متداخل تحت ذلك التعليق تحديداً
+  function handleReplySubmit(e, postId, parentReplyId) {
     e.preventDefault();
     const input = e.target.querySelector('input');
     const content = input.value.trim();
@@ -606,8 +654,22 @@
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    post.replies.push({ id: cryptoId(), author: 'أنت', content, createdAt: Date.now() });
+    const newReply = { id: cryptoId(), author: 'أنت', content, createdAt: Date.now(), replies: [] };
+
+    if (!parentReplyId) {
+      post.replies.push(newReply);
+    } else {
+      const parent = findReplyRecursive(post.replies, parentReplyId);
+      if (parent) {
+        if (!parent.replies) parent.replies = [];
+        parent.replies.push(newReply);
+      } else {
+        post.replies.push(newReply);
+      }
+    }
+
     post._repliesOpen = true;
+    activeReplyTarget = null;
     savePosts();
     renderFeed();
   }
@@ -630,7 +692,6 @@
       id: cryptoId(),
       author: document.getElementById('post-author').value.trim() || 'طالب مجهول',
       category: document.getElementById('post-category').value,
-      title: document.getElementById('post-title').value.trim(),
       content: document.getElementById('post-content').value.trim(),
       createdAt: Date.now(),
       likes: 0,
