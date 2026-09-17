@@ -839,5 +839,165 @@
         });
     </script>
 
+<style>
+/* ============================================================
+   StudeX — Shared animated background: PCB Circuit Traces
+   Purely visual/decorative layer. Does NOT touch any existing
+   page content, text, card, or color styling.
+
+   Matches the reference circuit-board style: straight,
+   right-angle trace lines (not a node/triangle mesh) with small
+   glowing "via" pads at the joints, plus a bright pulse of light
+   that travels slowly along each trace — but in a light, soft
+   blue/indigo palette instead of the dark/neon original, to fit
+   the site's white theme.
+
+   Confined to the left and right margins only (fixed SVG panels,
+   drawn only in that outer zone) — the whole center column stays
+   pure white with nothing crossing it. Hidden below 1024px width,
+   where there is no side margin to show it in anyway, so it costs
+   nothing on phones/tablets.
+
+   pointer-events: none and z-index: -1 the whole time — it can
+   never block a click or sit above real content.
+   ============================================================ */
+#studex-circuit-left,
+#studex-circuit-right {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 230px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.85;
+}
+#studex-circuit-left  { left: 0; }
+#studex-circuit-right { right: 0; transform: scaleX(-1); }
+
+#studex-circuit-left svg,
+#studex-circuit-right svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sx-trace {
+  fill: none;
+  stroke: #93B4F0;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.sx-via {
+  fill: #6C8EF5;
+  opacity: 0.6;
+}
+.sx-via-glow {
+  fill: #5A7CF0;
+  opacity: 0.35;
+}
+.sx-chip {
+  fill: #EEF3FD;
+  stroke: #9DB8F2;
+  stroke-width: 1.2;
+  opacity: 0.7;
+}
+.sx-pulse {
+  fill: none;
+  stroke: #4F7DF5;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(79, 125, 245, 0.85));
+  stroke-dasharray: 14 420;
+  animation: studex-pulse-flow linear infinite;
+}
+@keyframes studex-pulse-flow {
+  0%   { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -434; }
+}
+.sx-via.sx-blink {
+  animation: studex-via-blink 3.2s ease-in-out infinite;
+}
+@keyframes studex-via-blink {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.9; }
+}
+
+@media (max-width: 1024px) {
+  #studex-circuit-left, #studex-circuit-right { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sx-pulse { animation: none; opacity: 0; }
+  .sx-via.sx-blink { animation: none; }
+}
+</style>
+<script>
+(function () {
+  "use strict";
+
+  if (document.getElementById("studex-circuit-left")) return; // avoid double-init
+
+  // One shared trace layout (right-angle PCB-style paths), reused
+  // for both sides — the right panel is simply mirrored with CSS
+  // (transform: scaleX(-1)) so the traces point outward correctly
+  // on both edges without duplicating the path data.
+  var svgInner =
+    '<svg viewBox="0 0 230 800" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">' +
+
+      '<g class="sx-trace">' +
+        '<path d="M0,60 H70 V130 H150"/>' +
+        '<path d="M0,150 H40"/>' +
+        '<path d="M0,210 H100 V280 H60 V340"/>' +
+        '<path d="M0,300 H30"/>' +
+        '<path d="M0,390 H130 V460"/>' +
+        '<path d="M0,430 H60 V470 H20"/>' +
+        '<path d="M0,520 H90 V590 H160"/>' +
+        '<path d="M0,560 H45"/>' +
+        '<path d="M0,650 H110 V720 H70"/>' +
+        '<path d="M0,700 H35"/>' +
+        '<path d="M0,760 H80"/>' +
+      '</g>' +
+
+      '<g class="sx-pulse" style="animation-duration:7.5s;"><path d="M0,60 H70 V130 H150"/></g>' +
+      '<g class="sx-pulse" style="animation-duration:9s; animation-delay:-2s;"><path d="M0,210 H100 V280 H60 V340"/></g>' +
+      '<g class="sx-pulse" style="animation-duration:8.2s; animation-delay:-4s;"><path d="M0,390 H130 V460"/></g>' +
+      '<g class="sx-pulse" style="animation-duration:10s; animation-delay:-1s;"><path d="M0,520 H90 V590 H160"/></g>' +
+      '<g class="sx-pulse" style="animation-duration:8.8s; animation-delay:-5s;"><path d="M0,650 H110 V720 H70"/></g>' +
+
+      '<rect class="sx-chip" x="150" y="115" width="34" height="30" rx="4"/>' +
+      '<rect class="sx-chip" x="60" y="440" width="30" height="26" rx="4"/>' +
+
+      '<g>' +
+        '<circle class="sx-via sx-blink" cx="70" cy="60" r="3"/>' +
+        '<circle class="sx-via" cx="70" cy="130" r="2.6"/>' +
+        '<circle class="sx-via sx-blink" cx="100" cy="210" r="3"/>' +
+        '<circle class="sx-via" cx="100" cy="280" r="2.6"/>' +
+        '<circle class="sx-via" cx="60" cy="280" r="2.6"/>' +
+        '<circle class="sx-via sx-blink" cx="130" cy="390" r="3"/>' +
+        '<circle class="sx-via" cx="60" cy="430" r="2.6"/>' +
+        '<circle class="sx-via" cx="60" cy="470" r="2.6"/>' +
+        '<circle class="sx-via sx-blink" cx="90" cy="520" r="3"/>' +
+        '<circle class="sx-via" cx="90" cy="590" r="2.6"/>' +
+        '<circle class="sx-via sx-blink" cx="110" cy="650" r="3"/>' +
+        '<circle class="sx-via" cx="110" cy="720" r="2.6"/>' +
+      '</g>' +
+    '</svg>';
+
+  var left = document.createElement("div");
+  left.id = "studex-circuit-left";
+  left.setAttribute("aria-hidden", "true");
+  left.innerHTML = svgInner;
+
+  var right = document.createElement("div");
+  right.id = "studex-circuit-right";
+  right.setAttribute("aria-hidden", "true");
+  right.innerHTML = svgInner;
+
+  // Insert as the very first elements in <body> so they stay
+  // behind every existing element without altering any of them.
+  document.body.insertBefore(right, document.body.firstChild);
+  document.body.insertBefore(left, document.body.firstChild);
+})();
+</script>
 </body>
 </html>
