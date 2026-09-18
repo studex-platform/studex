@@ -233,7 +233,7 @@
     </span>
     <h2 class="font-display font-bold text-lg text-navy">اللوحة السريعة (Kanban)</h2>
   </div>
-  <div id="board" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5"></div>
+  <div id="board" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
 </main>
 
 <!-- ============ VISUAL CANVAS SECTION ============ -->
@@ -349,12 +349,6 @@
 
 </section>
 
-<!-- Floating add button -->
-<button id="fab-add" aria-label="إضافة بطاقة جديدة"
-  class="fixed bottom-6 left-6 z-30 w-14 h-14 rounded-2xl bg-navy hover:bg-accent text-white shadow-lg shadow-navy/30 flex items-center justify-center transition-colors">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
-</button>
-
 <!-- ============ KANBAN ADD/EDIT MODAL ============ -->
 <div id="modal-backdrop" class="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
   <div id="modal-panel" class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -376,8 +370,6 @@
         <label class="block text-xs font-display font-semibold text-slate-500 mb-2">العمود / التصنيف</label>
         <div class="select-wrap">
           <select id="field-column" class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
-            <option value="remaining">الخطة الشجرية / المواد المتبقية</option>
-            <option value="schedule">جدول الفصل الحالي</option>
             <option value="tasks">مهام واختبارات قادمة</option>
             <option value="notes">ملاحظات سريعة</option>
           </select>
@@ -517,8 +509,13 @@
         const savedNodes = (parsed.canvas && parsed.canvas.nodes) || [];
         const savedConnections = (parsed.canvas && parsed.canvas.connections) || [];
 
+        const legacyColumnMap = { remaining: 'tasks', schedule: 'notes' };
+        const migratedKanban = (parsed.kanban || []).map(card =>
+          legacyColumnMap[card.column] ? { ...card, column: legacyColumnMap[card.column] } : card
+        );
+
         state = {
-          kanban: parsed.kanban || [],
+          kanban: migratedKanban,
           canvas: {
             nodes: savedNodes,
             connections: savedConnections,
@@ -576,8 +573,6 @@
 
   function seedKanban() {
     return [
-      { id: cryptoId(), title: 'هيكلة بيانات (متطلب سابق: برمجة 2)', column: 'remaining', priority: 'normal', date: '', details: '3 ساعات معتمدة' },
-      { id: cryptoId(), title: 'شبكات حاسوب', column: 'schedule', priority: 'normal', date: '', details: 'أحد - ثلاثاء 10:00 صباحاً' },
       { id: cryptoId(), title: 'امتحان منتصف - قواعد بيانات', column: 'tasks', priority: 'urgent', date: '', details: 'راجع الفصل 4 و5' },
       { id: cryptoId(), title: 'تذكير', column: 'notes', priority: 'done', date: '', details: 'راسل الدكتور بخصوص درجة المشروع' },
     ];
@@ -594,8 +589,6 @@
      KANBAN BOARD (unchanged behaviour, ported to shared state)
   ===================================================================== */
   const columns = [
-    { id: 'remaining', title: 'الخطة الشجرية / المواد المتبقية', icon: `<path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H10.5C11.3284 5 12 5.67157 12 6.5V19L9 17L6 19V6.5" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8H17.5C18.3284 8 19 8.67157 19 9.5V19L16.5 17.5L12 19" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/>`, accent: 'bg-blue-50' },
-    { id: 'schedule', title: 'جدول الفصل الحالي', icon: `<rect x="3.5" y="4.5" width="17" height="15" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M3.5 9.5H20.5" stroke="#60A5FA" stroke-width="1.6"/><path d="M8 3V6M16 3V6" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/>`, accent: 'bg-violet-50' },
     { id: 'tasks', title: 'مهام واختبارات قادمة', icon: `<rect x="4" y="4" width="16" height="16" rx="2" stroke="#3B82F6" stroke-width="1.6"/><path d="M8 12L11 15L16 9" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`, accent: 'bg-amber-50' },
     { id: 'notes', title: 'ملاحظات سريعة', icon: `<path d="M4 5.5C4 4.67157 4.67157 4 5.5 4H15L20 9V18.5C20 19.3284 19.3284 20 18.5 20H5.5C4.67157 20 4 19.3284 4 18.5V5.5Z" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M15 4V8.5C15 8.77614 15.2239 9 15.5 9H20" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/>`, accent: 'bg-pink-50' },
   ];
@@ -746,7 +739,7 @@
     const existing = id ? state.kanban.find(c => c.id === id) : null;
     modalTitle.textContent = existing ? 'تعديل البطاقة' : 'إضافة بطاقة جديدة';
     fieldTitle.value = existing ? existing.title : '';
-    fieldColumn.value = existing ? existing.column : (presetColumn || 'remaining');
+    fieldColumn.value = existing ? existing.column : (presetColumn || 'tasks');
     fieldDate.value = existing ? (existing.date || '') : '';
     fieldDetails.value = existing ? (existing.details || '') : '';
     selectedPriority = existing ? existing.priority : 'normal';
@@ -763,7 +756,6 @@
 
   priorityButtons.forEach(btn => btn.addEventListener('click', () => { selectedPriority = btn.dataset.priority; updatePriorityPicker(); }));
 
-  document.getElementById('fab-add').addEventListener('click', () => openModal(null));
   document.getElementById('modal-close').addEventListener('click', closeModal);
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
