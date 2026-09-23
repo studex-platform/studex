@@ -12,7 +12,8 @@
     </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudeX | منصتك الشاملة للتميز الأكاديمي والمهني</title>
+<title>من نحن | About Us - StudX</title>
+<meta name="description" content="StudX: منصة طلابية رقمية شاملة لطلاب الجامعة الأردنية — StudX is a digital student platform for University of Jordan students.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -36,40 +37,12 @@
 </script>
 <style>
   html { scroll-behavior: smooth; }
-  body { font-family: 'Tajawal', sans-serif; background: #F8FAFC; }
+  body { font-family: 'Tajawal', sans-serif; background: #FFFFFF; }
   h1, h2, h3, h4, .font-display { font-family: 'Cairo', sans-serif; }
-
-  .grain-noise {
-    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.06) 1px, transparent 0);
-    background-size: 22px 22px;
-  }
-
+  .hero-glow { background: radial-gradient(60% 70% at 50% 0%, rgba(59,130,246,0.16) 0%, rgba(59,130,246,0) 70%); }
   .card-lift { transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s ease, border-color 0.35s ease; }
-  .card-lift:hover { transform: translateY(-6px); }
-
-  .hero-glow {
-    background: radial-gradient(60% 60% at 50% 0%, rgba(59,130,246,0.16) 0%, rgba(59,130,246,0) 70%);
-  }
-
+  .card-lift:hover { transform: translateY(-4px); box-shadow: 0 14px 30px -12px rgba(59,130,246,0.25); }
   ::selection { background: #3B82F6; color: white; }
-
-  .scroll-reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
-  .scroll-reveal.in-view { opacity: 1; transform: translateY(0); }
-
-  @keyframes float-a { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-12px) rotate(-6deg); } }
-  @keyframes float-b { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-9px) rotate(5deg); } }
-  @keyframes float-c { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-7px) rotate(-4deg); } }
-  @keyframes ping-slow { 0% { transform: scale(0.9); opacity: 0.7; } 80%, 100% { transform: scale(1.6); opacity: 0; } }
-  @keyframes pulse-slow { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
-  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-  .animate-float-a { animation: float-a 4.5s ease-in-out infinite; }
-  .animate-float-b { animation: float-b 5.5s ease-in-out infinite; animation-delay: 0.6s; }
-  .animate-float-c { animation: float-c 5s ease-in-out infinite; animation-delay: 1.2s; }
-  .animate-ping-slow { animation: ping-slow 2.6s cubic-bezier(0,0,0.2,1) infinite; }
-  .animate-pulse-slow { animation: pulse-slow 2.6s ease-in-out infinite; }
-  .animate-spin-slow { animation: spin-slow 14s linear infinite; }
-
   /* ---- Navbar (shared across all pages) ---- */
   .nav-link { position: relative; }
   .nav-link::after {
@@ -118,13 +91,13 @@
 
       <!-- Desktop Nav -->
       <nav class="hidden xl:flex items-center gap-8 font-display font-medium text-[15px] text-slate-600">
-        <a href="index.html" class="nav-link active">الرئيسية</a>
+        <a href="index.html" class="nav-link hover:text-navy transition-colors">الرئيسية</a>
         <a href="index.html#tools" class="nav-link hover:text-navy transition-colors">الأدوات التفاعلية</a>
         <a href="opportunities.html" class="nav-link hover:text-navy transition-colors">الفرص والدورات</a>
         <a href="community.html" class="nav-link hover:text-navy transition-colors">مجتمع الطلاب</a>
         <a href="academic-resources.html" class="nav-link hover:text-navy transition-colors">المصادر الأكاديمية</a>
         <a href="career.html" class="nav-link hover:text-navy transition-colors">التطوير المهني</a>
-        <a href="about.html" class="nav-link hover:text-navy transition-colors">من نحن</a>
+        <a href="about.html" class="nav-link active">من نحن</a>
       </nav>
 
       <!-- Actions -->
@@ -144,13 +117,13 @@
     <!-- Mobile Nav -->
     <div id="mobile-menu" class="xl:hidden">
       <nav class="flex flex-col gap-1 pb-5 font-display font-medium text-[15px] text-slate-600 border-t border-slate-100 pt-4">
-        <a href="index.html" class="py-2.5 px-2 rounded-lg bg-accent/5 text-accent font-bold">الرئيسية</a>
+        <a href="index.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الرئيسية</a>
         <a href="index.html#tools" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الأدوات التفاعلية</a>
         <a href="opportunities.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الفرص والدورات</a>
         <a href="community.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">مجتمع الطلاب</a>
         <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
         <a href="career.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
-        <a href="about.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">من نحن</a>
+        <a href="about.html" class="py-2.5 px-2 rounded-lg bg-accent/5 text-accent font-bold">من نحن</a>
         <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
          <a href="admin.html" class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg text-center block">لوحة التحكم</a>
         </div>
@@ -170,192 +143,55 @@
   </div>
 </header>
 
-<!-- ============ HERO ============ -->
-<section id="home" class="relative overflow-hidden hero-glow">
-  <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-20 pb-16 sm:pt-28 sm:pb-24 text-center">
-
-    <div class="font-display font-black tracking-tight leading-none text-[3.2rem] sm:text-[4.5rem] md:text-[5.5rem]">
+<!-- ============ ABOUT HERO: LOGO ============ -->
+<section class="relative overflow-hidden hero-glow">
+  <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14 text-center">
+    <img src="logo.png" alt="شعار StudX"
+         class="mx-auto h-44 sm:h-56 md:h-72 w-auto max-w-full object-contain"
+         onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');">
+    <div id="logo-fallback" class="hidden font-display font-black tracking-tight leading-none text-[4.5rem] sm:text-[6rem] md:text-[7.5rem]" dir="ltr">
       <span class="text-navy">Stude</span><span class="text-red-600">X</span>
     </div>
-
-    <h1 class="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl leading-[1.25] text-navy mt-4">
-      منصتك الشاملة<br class="hidden sm:block">
-      <span class="text-accent">للتميز الأكاديمي</span> والمهني
-    </h1>
-
-    <p class="text-slate-500 text-base sm:text-lg mt-6 max-w-2xl mx-auto leading-relaxed">
-      كل ما يحتاجه طالب الجامعة من حاسبة معدل، خطط تفاعلية، فرص تدريب، ومصادر أكاديمية في مكان واحد.
-    </p>
-
-    <!-- Quick stats -->
-    <div class="flex items-center justify-center gap-8 sm:gap-14 mt-14 text-center">
-      <div>
-        <p class="font-display font-extrabold text-2xl sm:text-3xl text-navy">+40,000</p>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">طالب مستهدف</p>
-      </div>
-      <div class="w-px h-10 bg-slate-200"></div>
-      <div>
-        <p class="font-display font-extrabold text-2xl sm:text-3xl text-navy">+18</p>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">كلية وتخصص</p>
-      </div>
-      <div class="w-px h-10 bg-slate-200"></div>
-      <div>
-        <p class="font-display font-extrabold text-2xl sm:text-3xl text-navy">1</p>
-        <p class="text-slate-400 text-xs sm:text-sm mt-1">الجامعة الأردنية</p>
-      </div>
-    </div>
+    <div class="mx-auto mt-8 h-1 w-16 rounded-full bg-accent"></div>
   </div>
 </section>
 
-<!-- ============ FEATURE GRID (BENTO) ============ -->
-<section class="max-w-7xl mx-auto px-5 sm:px-8 pb-24" id="features">
-  <div class="text-center max-w-xl mx-auto mb-12 scroll-reveal">
-    <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-navy">أدوات مصممة لرحلتك الجامعية</h2>
-    <p class="text-slate-500 mt-3 text-sm sm:text-base">اختر القسم اللي تحتاجه الآن، وكل شي باقي بينتظرك أول ما تحتاجه</p>
-  </div>
+<!-- ============ ABOUT CONTENT (AR + EN) ============ -->
+<section class="max-w-4xl mx-auto px-5 sm:px-8 pb-16">
+  <div class="flex flex-col gap-6">
 
-  <div class="grid grid-cols-1 md:grid-cols-6 gap-5">
+    <article lang="ar" dir="rtl" class="rounded-3xl bg-white border border-blue-100 shadow-sm p-7 sm:p-10">
+      <h1 class="font-display font-extrabold text-3xl sm:text-4xl text-navy">من نحن <span class="text-accent">- StudX</span></h1>
+      <p class="mt-5 text-slate-600 text-base sm:text-lg leading-loose">منصة طلابية رقمية شاملة ومبتكرة، تأسست لتكون المرجع الأول والرفيق الدائم لطلاب الجامعة الأردنية في رحلتهم الأكاديمية والمهنية. نهدف إلى تقليل العقبات وتسهيل الحياة الجامعية من خلال توفير بيئة متكاملة تجمع بين المصادر الأكاديمية الدقيقة، الأدوات التفاعلية المتقدمة كنظام التخطيط وحاسبة المعدل، إضافة إلى ربط الطلاب بالفرص التدريبية والمجتمع الطلابي بكل سهولة ومرونة.</p>
+      <p class="mt-6 pt-6 border-t border-blue-100 font-display font-bold text-lg sm:text-xl text-accent-dim leading-relaxed">StudX.. بوابتك الشاملة للتميز الأكاديمي والمهني.</p>
+    </article>
 
-    <!-- Card 1: Interactive Platform (large, spans 4) -->
-    <div id="tools" class="card-lift group md:col-span-4 relative rounded-3xl bg-navy overflow-hidden p-8 sm:p-10 flex flex-col justify-between min-h-[300px] shadow-lg shadow-navy/10 border border-navy">
-      <div class="absolute inset-0 grain-noise opacity-40 pointer-events-none"></div>
-      <div class="absolute -left-16 -top-16 w-56 h-56 rounded-full bg-accent/20 blur-3xl"></div>
-      <div class="relative z-10">
-        <div class="w-12 h-12 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center mb-6">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 19V5C4 4.44772 4.44772 4 5 4H19C19.5523 4 20 4.44772 20 5V19C20 19.5523 19.5523 20 19 20H5C4.44772 20 4 19.5523 4 19Z" stroke="#60A5FA" stroke-width="1.6"/><path d="M4 9H20" stroke="#60A5FA" stroke-width="1.6"/><path d="M9 20V9" stroke="#60A5FA" stroke-width="1.6"/><path d="M13.5 14L15.5 12L17.5 15" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl sm:text-2xl text-white mb-3">المنصة التفاعلية</h3>
-        <p class="text-slate-300 text-sm sm:text-[15px] leading-relaxed max-w-md">
-          احسب معدلك التراكمي بدقة عبر حاسبة المعدل الأردنية، وخطط لفصلك الدراسي على لوحة تفاعلية شبيهة بـ Miro.
-        </p>
-      </div>
-      <div class="relative z-10 flex flex-wrap gap-2.5 mt-8">
-        <a href="gpa-calculator.html" class="text-xs font-display font-semibold text-white bg-accent hover:bg-accent-light px-3.5 py-2 rounded-full transition-colors flex items-center gap-1.5">
-          حاسبة المعدل
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <a href="planning-board.html" class="text-xs font-display font-semibold text-accent-light bg-white/5 border border-white/10 hover:bg-white/10 px-3.5 py-2 rounded-full transition-colors flex items-center gap-1.5">
-          لوحة التخطيط التفاعلية
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-      </div>
-    </div>
-
-    <!-- Card 2: Community (spans 2) -->
-    <a href="community.html" class="card-lift group md:col-span-2 rounded-3xl bg-white border border-slate-200 p-7 flex flex-col justify-between min-h-[300px] shadow-sm hover:shadow-lg hover:border-accent/30">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="9" r="3" stroke="#3B82F6" stroke-width="1.6"/><path d="M4 19C4 15.6863 6.35786 13 9.2 13C10.5 13 11.7 13.5 12.6 14.3" stroke="#3B82F6" stroke-width="1.6" stroke-linecap="round"/><circle cx="17" cy="8" r="2.5" stroke="#60A5FA" stroke-width="1.6"/><path d="M15 19C15 16.2 16.9 14 19.5 14C20 14 20.5 14.1 21 14.2" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl text-navy mb-3">مجتمع StudeX</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">
-          اطرح أسئلتك في قسم "اسأل"، وانضم لجروبات الواتساب الخاصة بموادك الدراسية.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2 mt-6">
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">قسم اسأل</span>
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">جروبات المواد</span>
-      </div>
-    </a>
-
-    <!-- Card 3: Opportunities (spans 2) -->
-    <a href="opportunities.html" class="card-lift group md:col-span-2 rounded-3xl bg-white border border-slate-200 p-7 flex flex-col justify-between min-h-[280px] shadow-sm hover:shadow-lg hover:border-accent/30">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="11" rx="1.5" stroke="#3B82F6" stroke-width="1.6"/><path d="M8 8V6.5C8 5.67157 8.67157 5 9.5 5H14.5C15.3284 5 16 5.67157 16 6.5V8" stroke="#3B82F6" stroke-width="1.6"/><path d="M4 12.5H20" stroke="#60A5FA" stroke-width="1.6"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl text-navy mb-3">الفرص والدورات</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">
-          مجمّع تلقائي للمنح والتدريب المتاح حالياً، بالإضافة لأفضل الكورسات المجانية.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2 mt-6">
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">منح وتدريب</span>
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">كورسات مجانية</span>
-      </div>
-    </a>
-
-    <!-- Card 4: Academic Resources (spans 3) -->
-    <a href="academic-resources.html" class="card-lift group md:col-span-3 rounded-3xl bg-white border border-slate-200 p-7 sm:p-8 flex flex-col justify-between min-h-[260px] shadow-sm hover:shadow-lg hover:border-accent/30">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6.5C4 5.67157 4.67157 5 5.5 5H10.5C11.3284 5 12 5.67157 12 6.5V19L9 17L6 19V6.5" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8H17.5C18.3284 8 19 8.67157 19 9.5V19L16.5 17.5L12 19" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl text-navy mb-3">المصادر الأكاديمية</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">
-          بنك أسئلة السنوات السابقة، إيميلات الدكاترة، وأدوات الذكاء الاصطناعي المساعدة في الدراسة.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2 mt-6">
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">بنك أسئلة</span>
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">إيميلات الدكاترة</span>
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">أدوات AI</span>
-      </div>
-    </a>
-
-    <!-- Card 5: Career Development (spans 3) -->
-    <a href="career.html" class="card-lift group md:col-span-3 rounded-3xl bg-white border border-slate-200 p-7 sm:p-8 flex flex-col justify-between min-h-[260px] shadow-sm hover:shadow-lg hover:border-accent/30">
-      <div>
-        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 20V13M8 13L4 9L8 5L12 9L8 13Z" stroke="#3B82F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M16 20V15" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round"/><path d="M13 20H19" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="11" r="2.5" stroke="#3B82F6" stroke-width="1.6"/></svg>
-        </div>
-        <h3 class="font-display font-bold text-xl text-navy mb-3">التطوير المهني</h3>
-        <p class="text-slate-500 text-sm leading-relaxed">
-          دليل شامل لإنشاء حساب LinkediIn احترافي، بناء بروفايل مميز، والتعرف على المؤسسات المهنية.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2 mt-6">
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">دليل LinkedIn</span>
-        <span class="text-xs font-display font-medium text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-full">بناء البروفايل</span>
-      </div>
-    </a>
+    <article lang="en" dir="ltr" class="rounded-3xl bg-white border border-blue-100 shadow-sm p-7 sm:p-10 text-left">
+      <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-navy">About Us <span class="text-accent">- StudX</span></h2>
+      <p class="mt-5 text-slate-600 text-base sm:text-lg leading-loose">StudX is a comprehensive and innovative digital student platform dedicated to empowering University of Jordan students throughout their academic and professional journeys. Our mission is to minimize obstacles and streamline university life by providing an all-in-one ecosystem that combines reliable academic resources, advanced interactive tools such as planning boards and GPA calculators, and vital connections to career and community opportunities.</p>
+      <p class="mt-6 pt-6 border-t border-blue-100 font-display font-bold text-lg sm:text-xl text-accent-dim leading-relaxed">StudX is your ultimate gateway to academic and professional excellence.</p>
+    </article>
 
   </div>
-</section>
 
-<!-- ============ CTA STRIP ============ -->
-<section class="max-w-7xl mx-auto px-5 sm:px-8 pb-24">
-  <div class="relative rounded-3xl bg-navy overflow-hidden px-8 py-12 sm:px-14 sm:py-16 text-center">
-    <div class="absolute inset-0 grain-noise opacity-30 pointer-events-none"></div>
-    <div class="absolute left-1/2 -translate-x-1/2 -top-24 w-72 h-72 rounded-full bg-accent/20 blur-3xl"></div>
-    <h2 class="relative font-display font-extrabold text-2xl sm:text-3xl text-white">جاهز تبدأ رحلتك مع StudeX؟</h2>
-    <p class="relative text-slate-300 mt-3 max-w-lg mx-auto text-sm sm:text-base">
-      انضم لآلاف الطلاب اللي صاروا ينظمون دراستهم ويلاقون فرصهم بمكان واحد.
-    </p>
-
-    <!-- Decorative interactive visual (replaces CTA button) -->
-    <div class="relative flex items-center justify-center h-36 sm:h-40 mt-8" aria-hidden="true">
-
-      <!-- dashed orbit ring -->
-      <span class="absolute w-40 h-40 sm:w-48 sm:h-48 rounded-full border border-dashed border-accent/25 animate-spin-slow"></span>
-
-      <!-- pulsing rings around the core -->
-      <span class="absolute w-24 h-24 rounded-full border border-accent/30 animate-ping-slow"></span>
-      <span class="absolute w-16 h-16 rounded-full bg-accent/20 animate-pulse-slow"></span>
-
-      <!-- core badge -->
-      <span class="relative w-16 h-16 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center shadow-lg shadow-accent/20 backdrop-blur-sm">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 7L12 3L20 7L12 11L4 7Z" stroke="#60A5FA" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9.5V15C7 15 9 17 12 17C15 17 17 15 17 15V9.5" stroke="#60A5FA" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-
-      <!-- floating accent icons -->
-      <span class="absolute right-[18%] top-1 sm:right-[26%] w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center animate-float-a">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 19.5V6.5C4 5.4 4.9 4.5 6 4.5H10C11.1 4.5 12 5.4 12 6.5V19.5" stroke="#93C5FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 19.5V6.5C12 5.4 12.9 4.5 14 4.5H18C19.1 4.5 20 5.4 20 6.5V19.5" stroke="#93C5FD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-
-      <span class="absolute left-[18%] top-4 sm:left-[26%] w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center animate-float-b">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 12C20 16.4 16.4 20 12 20C10.6 20 9.3 19.6 8.2 19L4 20L5 15.8C4.4 14.7 4 13.4 4 12C4 7.6 7.6 4 12 4C16.4 4 20 7.6 20 12Z" stroke="#93C5FD" stroke-width="1.5" stroke-linejoin="round"/></svg>
-      </span>
-
-      <span class="absolute left-[8%] bottom-2 sm:left-[15%] w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center animate-float-c">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 3L14.2 9.3L21 9.6L15.7 13.7L17.5 20.3L12 16.4L6.5 20.3L8.3 13.7L3 9.6L9.8 9.3L12 3Z" stroke="#93C5FD" stroke-width="1.4" stroke-linejoin="round"/></svg>
-      </span>
-
-      <span class="absolute right-[8%] bottom-1 sm:right-[15%] w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center animate-float-c" style="animation-delay: 2s;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#93C5FD" stroke-width="1.4"/><path d="M12 8V12L14.5 14" stroke="#93C5FD" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </span>
-
-    </div>
+  <!-- Quick navigation to the platform's sections -->
+  <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <a href="academic-resources.html" class="card-lift group block rounded-2xl bg-white border border-blue-100 hover:border-accent/50 p-5 text-center shadow-sm">
+        <span class="block font-display font-bold text-navy group-hover:text-accent transition-colors">المصادر الأكاديمية</span>
+        <span class="block text-xs text-slate-400 mt-1" dir="ltr">Academic Resources</span>
+      </a>
+      <a href="index.html#tools" class="card-lift group block rounded-2xl bg-white border border-blue-100 hover:border-accent/50 p-5 text-center shadow-sm">
+        <span class="block font-display font-bold text-navy group-hover:text-accent transition-colors">الأدوات التفاعلية</span>
+        <span class="block text-xs text-slate-400 mt-1" dir="ltr">Interactive Tools</span>
+      </a>
+      <a href="opportunities.html" class="card-lift group block rounded-2xl bg-white border border-blue-100 hover:border-accent/50 p-5 text-center shadow-sm">
+        <span class="block font-display font-bold text-navy group-hover:text-accent transition-colors">الفرص والدورات</span>
+        <span class="block text-xs text-slate-400 mt-1" dir="ltr">Career Opportunities</span>
+      </a>
+      <a href="community.html" class="card-lift group block rounded-2xl bg-white border border-blue-100 hover:border-accent/50 p-5 text-center shadow-sm">
+        <span class="block font-display font-bold text-navy group-hover:text-accent transition-colors">مجتمع الطلاب</span>
+        <span class="block text-xs text-slate-400 mt-1" dir="ltr">Student Community</span>
+      </a>
   </div>
 </section>
 
@@ -376,7 +212,7 @@
       <div>
         <h4 class="font-display font-semibold text-white text-sm mb-4">الأقسام</h4>
         <ul class="space-y-2.5 text-sm">
-          <li><a href="#tools" class="hover:text-accent-light transition-colors">الأدوات التفاعلية</a></li>
+          <li><a href="index.html#tools" class="hover:text-accent-light transition-colors">الأدوات التفاعلية</a></li>
           <li><a href="opportunities.html" class="hover:text-accent-light transition-colors">الفرص والدورات</a></li>
           <li><a href="community.html" class="hover:text-accent-light transition-colors">مجتمع الطلاب</a></li>
           <li><a href="academic-resources.html" class="hover:text-accent-light transition-colors">المصادر الأكاديمية</a></li>
@@ -420,52 +256,27 @@
 </footer>
 
 <script>
-  // Mobile menu toggle
-  const menuBtn = document.getElementById('menu-btn');
-  const mobileMenu = document.getElementById('mobile-menu');
-  const iconOpen = document.getElementById('icon-open');
-  const iconClose = document.getElementById('icon-close');
-
-  menuBtn.addEventListener('click', () => {
-    mobileMenu.classList.toggle('open');
-    iconOpen.classList.toggle('hidden');
-    iconClose.classList.toggle('hidden');
-  });
-
-  // Close mobile menu when a link is clicked
-  document.querySelectorAll('#mobile-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-      mobileMenu.classList.remove('open');
-      iconOpen.classList.remove('hidden');
-      iconClose.classList.add('hidden');
+  // Navbar: mobile menu toggle
+  (function () {
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const iconOpen = document.getElementById('icon-open');
+    const iconClose = document.getElementById('icon-close');
+    if (!menuBtn || !mobileMenu) return;
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+      iconOpen.classList.toggle('hidden');
+      iconClose.classList.toggle('hidden');
     });
-  });
-
-  // Scroll reveal for section heading
-  const revealEls = document.querySelectorAll('.scroll-reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-        observer.unobserve(entry.target);
-      }
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        iconOpen.classList.remove('hidden');
+        iconClose.classList.add('hidden');
+      });
     });
-  }, { threshold: 0.15 });
-  revealEls.forEach(el => observer.observe(el));
-
-  // Placeholder click feedback for feature cards (dummy routing hooks)
-  document.querySelectorAll('a[href^="#"]').forEach(link => {
-    link.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-      const targetEl = document.querySelector(targetId);
-      if (targetEl) {
-        e.preventDefault();
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
+  })();
 </script>
-
 <style>
 /* ============================================================
    StudeX — Shared animated background: PCB Circuit Traces

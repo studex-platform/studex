@@ -83,36 +83,119 @@
   }
 
   ::selection { background: #3B82F6; color: white; }
+
+  /* ---- Navbar (shared across all pages) ---- */
+  .nav-link { position: relative; }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 0;
+    width: 0%;
+    height: 2px;
+    background: #3B82F6;
+    transition: width 0.25s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+  .nav-link.active { color: #0F172A; font-weight: 700; }
+  .nav-link.active::after { width: 100%; }
+  #mobile-menu { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+  #mobile-menu.open { max-height: 640px; }
 </style>
 </head>
 <body class="text-navy antialiased">
 
-<!-- ============ TOP BAR ============ -->
+<!-- ============ NAVBAR ============ -->
 <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
-  <div class="max-w-5xl mx-auto px-5 sm:px-8">
-    <div class="flex flex-wrap items-center justify-between gap-4 h-auto py-3 sm:h-[72px] sm:py-0">
+  <div class="max-w-7xl mx-auto px-5 sm:px-8">
+    <div class="flex items-center justify-between h-[72px]">
+
+      <!-- Logo -->
       <a href="index.html" class="flex items-center shrink-0">
         <span class="font-display font-extrabold text-2xl tracking-tight">
           <span class="text-navy">Stude</span><span class="text-red-600">X</span>
         </span>
       </a>
 
-      <div class="flex items-center gap-2 bg-surface border border-slate-200 rounded-2xl p-1.5 shadow-sm order-3 sm:order-none w-full sm:w-fit">
-        <a href="gpa-calculator.html" class="tool-tab active font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
-          حاسبة المعدل
+      <!-- Social Icons (next to logo) -->
+      <div class="hidden sm:flex items-center gap-2.5 border-r border-slate-200 pr-4 mr-1">
+        <a href="https://chat.whatsapp.com/Di6MPUzdWMp9PgEkdlFkcu" target="_blank" rel="noopener" aria-label="واتساب StudeX" class="w-10 h-10 rounded-lg bg-slate-50 hover:bg-emerald-50 flex items-center justify-center transition-colors group">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#64748B" stroke-width="1.6" stroke-linejoin="round" class="group-hover:stroke-emerald-500 transition-colors"/></svg>
         </a>
-        <a href="planning-board.html" class="tool-tab font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
-          لوحة التخطيط
+        <a href="https://instagram.com/studex.platform" target="_blank" rel="noopener" aria-label="انستغرام StudeX" class="w-10 h-10 rounded-lg bg-slate-50 hover:bg-pink-50 flex items-center justify-center transition-colors group">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#64748B" stroke-width="1.6" class="group-hover:stroke-pink-500 transition-colors"/><circle cx="12" cy="12" r="4" stroke="#64748B" stroke-width="1.6" class="group-hover:stroke-pink-500 transition-colors"/><circle cx="17.2" cy="6.8" r="1" fill="#64748B" class="group-hover:fill-pink-500 transition-colors"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/mohammad-abu-alhaija/" target="_blank" rel="noopener" aria-label="لينكد إن StudeX" class="w-10 h-10 rounded-lg bg-slate-50 hover:bg-blue-50 flex items-center justify-center transition-colors group">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#64748B" stroke-width="1.6" class="group-hover:stroke-blue-500 transition-colors"/><path d="M8 10V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" class="group-hover:stroke-blue-500 transition-colors"/><circle cx="8" cy="7" r="1" fill="#64748B" class="group-hover:fill-blue-500 transition-colors"/><path d="M12 17V13C12 11.5 13 10.5 14.3 10.5C15.6 10.5 16.5 11.5 16.5 13V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" class="group-hover:stroke-blue-500 transition-colors"/></svg>
         </a>
       </div>
 
-      <a href="index.html" class="flex items-center gap-2 font-display font-semibold text-sm text-slate-600 hover:text-navy transition-colors shrink-0">
-        <span>عودة للرئيسية</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 12H7M7 12L11 16M7 12L11 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
+      <!-- Desktop Nav -->
+      <nav class="hidden xl:flex items-center gap-8 font-display font-medium text-[15px] text-slate-600">
+        <a href="index.html" class="nav-link hover:text-navy transition-colors">الرئيسية</a>
+        <a href="index.html#tools" class="nav-link active">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="nav-link hover:text-navy transition-colors">الفرص والدورات</a>
+        <a href="community.html" class="nav-link hover:text-navy transition-colors">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="nav-link hover:text-navy transition-colors">المصادر الأكاديمية</a>
+        <a href="career.html" class="nav-link hover:text-navy transition-colors">التطوير المهني</a>
+        <a href="about.html" class="nav-link hover:text-navy transition-colors">من نحن</a>
+      </nav>
+
+      <!-- Actions -->
+      <div class="hidden xl:flex items-center gap-3">
+        <a href="admin.html" class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20 inline-block text-center">
+  لوحة التحكم
+</a>
+      </div>
+
+      <!-- Mobile toggle -->
+      <button id="menu-btn" class="xl:hidden w-10 h-10 flex items-center justify-center rounded-lg text-navy" aria-label="فتح القائمة">
+        <svg id="icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg id="icon-close" class="hidden" width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile Nav -->
+    <div id="mobile-menu" class="xl:hidden">
+      <nav class="flex flex-col gap-1 pb-5 font-display font-medium text-[15px] text-slate-600 border-t border-slate-100 pt-4">
+        <a href="index.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الرئيسية</a>
+        <a href="index.html#tools" class="py-2.5 px-2 rounded-lg bg-accent/5 text-accent font-bold">الأدوات التفاعلية</a>
+        <a href="opportunities.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">الفرص والدورات</a>
+        <a href="community.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">مجتمع الطلاب</a>
+        <a href="academic-resources.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">المصادر الأكاديمية</a>
+        <a href="career.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">التطوير المهني</a>
+        <a href="about.html" class="py-2.5 px-2 rounded-lg hover:bg-slate-50 hover:text-navy">من نحن</a>
+        <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-100">
+         <a href="admin.html" class="font-display font-semibold text-sm bg-navy text-white px-4 py-2.5 rounded-lg text-center block">لوحة التحكم</a>
+        </div>
+        <div class="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-slate-100">
+          <a href="https://chat.whatsapp.com/Di6MPUzdWMp9PgEkdlFkcu" target="_blank" rel="noopener" aria-label="واتساب StudeX" class="w-11 h-11 rounded-lg bg-slate-50 flex items-center justify-center">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 20L5.3 15.9C4.5 14.5 4 12.9 4 11.2C4 6.1 8.1 2 13.2 2C18.3 2 22 6.1 22 11.2C22 16.3 18.3 20 13.2 20C11.5 20 9.9 19.5 8.5 18.7L4 20Z" stroke="#64748B" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="https://instagram.com/studex.platform" target="_blank" rel="noopener" aria-label="انستغرام StudeX" class="w-11 h-11 rounded-lg bg-slate-50 flex items-center justify-center">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#64748B" stroke-width="1.6"/><circle cx="12" cy="12" r="4" stroke="#64748B" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1" fill="#64748B"/></svg>
+          </a>
+          <a href="https://www.linkedin.com/in/mohammad-abu-alhaija/" target="_blank" rel="noopener" aria-label="لينكد إن StudeX" class="w-11 h-11 rounded-lg bg-slate-50 flex items-center justify-center">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#64748B" stroke-width="1.6"/><path d="M8 10V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="7" r="1" fill="#64748B"/><path d="M12 17V13C12 11.5 13 10.5 14.3 10.5C15.6 10.5 16.5 11.5 16.5 13V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </a>
+        </div>
+      </nav>
     </div>
   </div>
 </header>
+
+<!-- ============ TOOL TABS (sub-navigation for the interactive tools) ============ -->
+<div class="max-w-5xl mx-auto px-5 sm:px-8 pt-5">
+  <div class="flex items-center gap-2 bg-surface border border-slate-200 rounded-2xl p-1.5 shadow-sm w-full sm:w-fit sm:mx-auto">
+    <a href="gpa-calculator.html" class="tool-tab active font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+      حاسبة المعدل
+    </a>
+    <a href="planning-board.html" class="tool-tab font-display font-semibold text-sm px-4 py-2 rounded-xl flex-1 sm:flex-none text-center">
+      لوحة التخطيط
+    </a>
+  </div>
+</div>
+
 
 <!-- ============ BREADCRUMB + TITLE ============ -->
 <section class="max-w-5xl mx-auto px-5 sm:px-8 pt-10 pb-6">
@@ -789,6 +872,28 @@
   document.body.insertBefore(right, document.body.firstChild);
   document.body.insertBefore(left, document.body.firstChild);
 })();
+</script>
+<script>
+  // Navbar: mobile menu toggle
+  (function () {
+    const menuBtn = document.getElementById('menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const iconOpen = document.getElementById('icon-open');
+    const iconClose = document.getElementById('icon-close');
+    if (!menuBtn || !mobileMenu) return;
+    menuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+      iconOpen.classList.toggle('hidden');
+      iconClose.classList.toggle('hidden');
+    });
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        iconOpen.classList.remove('hidden');
+        iconClose.classList.add('hidden');
+      });
+    });
+  })();
 </script>
 </body>
 </html>
