@@ -13,6 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>من نحن | About Us - StudX</title>
+<link rel="icon" type="image/png" href="logo.png">
 <meta name="description" content="StudX: منصة طلابية رقمية شاملة لطلاب الجامعة الأردنية — StudX is a digital student platform for University of Jordan students.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,7 +104,7 @@
       <!-- Actions -->
       <div class="hidden xl:flex items-center gap-3">
         <a href="admin.html" class="font-display font-semibold text-sm bg-navy hover:bg-accent text-white px-5 py-2.5 rounded-lg transition-colors duration-300 shadow-sm shadow-navy/20 inline-block text-center">
-  لوحة التحكم
+ لوحة التحكم
 </a>
       </div>
 
@@ -145,11 +146,8 @@
 
 <!-- ============ ABOUT HERO: LOGO ============ -->
 <section class="relative overflow-hidden hero-glow">
-  <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14 text-center">
-    <img src="logo.png" alt="شعار StudX"
-         class="mx-auto h-44 sm:h-56 md:h-72 w-auto max-w-full object-contain"
-         onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');">
-    <div id="logo-fallback" class="hidden font-display font-black tracking-tight leading-none text-[4.5rem] sm:text-[6rem] md:text-[7.5rem]" dir="ltr">
+  <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-14 pb-10 sm:pt-20 sm:pb-14 text-center" dir="ltr">
+    <div class="font-display font-black tracking-tight leading-none text-[4.5rem] sm:text-[6rem] md:text-[7.5rem]">
       <span class="text-navy">Stude</span><span class="text-red-600">X</span>
     </div>
     <div class="mx-auto mt-8 h-1 w-16 rounded-full bg-accent"></div>
@@ -278,27 +276,6 @@
   })();
 </script>
 <style>
-/* ============================================================
-   StudeX — Shared animated background: PCB Circuit Traces
-   Purely visual/decorative layer. Does NOT touch any existing
-   page content, text, card, or color styling.
-
-   Matches the reference circuit-board style: straight,
-   right-angle trace lines (not a node/triangle mesh) with small
-   glowing "via" pads at the joints, plus a bright pulse of light
-   that travels slowly along each trace — but in a light, soft
-   blue/indigo palette instead of the dark/neon original, to fit
-   the site's white theme.
-
-   Confined to the left and right margins only (fixed SVG panels,
-   drawn only in that outer zone) — the whole center column stays
-   pure white with nothing crossing it. Hidden below 1024px width,
-   where there is no side margin to show it in anyway, so it costs
-   nothing on phones/tablets.
-
-   pointer-events: none and z-index: -1 the whole time — it can
-   never block a click or sit above real content.
-   ============================================================ */
 #studex-circuit-left,
 #studex-circuit-right {
   position: fixed;
@@ -373,12 +350,8 @@
 (function () {
   "use strict";
 
-  if (document.getElementById("studex-circuit-left")) return; // avoid double-init
+  if (document.getElementById("studex-circuit-left")) return;
 
-  // One shared trace layout (right-angle PCB-style paths), reused
-  // for both sides — the right panel is simply mirrored with CSS
-  // (transform: scaleX(-1)) so the traces point outward correctly
-  // on both edges without duplicating the path data.
   var svgInner =
     '<svg viewBox="0 0 230 800" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">' +
 
@@ -431,8 +404,6 @@
   right.setAttribute("aria-hidden", "true");
   right.innerHTML = svgInner;
 
-  // Insert as the very first elements in <body> so they stay
-  // behind every existing element without altering any of them.
   document.body.insertBefore(right, document.body.firstChild);
   document.body.insertBefore(left, document.body.firstChild);
 })();
