@@ -48,10 +48,6 @@
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button { opacity: 1; }
 
-  .mode-tab { transition: all 0.25s ease; }
-  .mode-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
-  .mode-tab:not(.active) { color: #64748B; }
-
   .tool-tab { transition: all 0.25s ease; }
   .tool-tab.active { background: #0F172A; color: #fff; box-shadow: 0 4px 14px -4px rgba(15,23,42,0.35); }
   .tool-tab:not(.active) { color: #64748B; }
@@ -218,7 +214,7 @@
         <span class="font-display font-semibold text-xs bg-accent/10 text-accent-dim border border-accent/20 px-3 py-1 rounded-full">نظام النقاط الجديد</span>
       </div>
       <p class="text-slate-500 text-sm sm:text-[15px] max-w-xl leading-relaxed">
-        احسب معدلك الفصلي أو معدلك التراكمي الجديد بدقة، وفق سلم علامات الجامعة الأردنية الرسمي - النظام الجديد فقط.
+        احسب معدلك الفصلي ومعدلك التراكمي الجديد بدقة (مع احتساب المواد المعادة)، وفق سلم علامات الجامعة الأردنية الرسمي - النظام الجديد فقط.
       </p>
     </div>
   </div>
@@ -227,18 +223,8 @@
 <!-- ============ MAIN CALCULATOR ============ -->
 <main class="max-w-5xl mx-auto px-5 sm:px-8 pb-24">
 
-  <!-- Mode Tabs -->
-  <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm w-full sm:w-fit mb-6">
-    <button id="tab-semester" class="mode-tab active font-display font-semibold text-sm px-5 py-2.5 rounded-xl flex-1 sm:flex-none">
-      المعدل الفصلي
-    </button>
-    <button id="tab-cumulative" class="mode-tab font-display font-semibold text-sm px-5 py-2.5 rounded-xl flex-1 sm:flex-none">
-      المعدل التراكمي
-    </button>
-  </div>
-
-  <!-- Cumulative-only inputs -->
-  <div id="cumulative-inputs" class="hidden bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
+  <!-- Previous data inputs -->
+  <div id="cumulative-inputs" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-6">
     <h3 class="font-display font-bold text-[15px] text-navy mb-4 flex items-center gap-2">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20V10M12 10L7 14M12 10L17 14" stroke="#3B82F6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 4H20" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/></svg>
       بياناتك السابقة
@@ -253,6 +239,7 @@
         <label class="block text-xs font-display font-semibold text-slate-500 mb-2">عدد الساعات المكتسبة سابقاً</label>
         <input id="prev-hours" type="number" min="0" step="1" placeholder="مثال: 60"
           class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+        <p class="text-xs text-slate-400 mt-2">يجب أن تشمل الساعات السابقة المواد التي ستعيدها هذا الفصل (بمحاولتها الأولى).</p>
       </div>
       <div class="sm:col-span-2">
         <label class="block text-xs font-display font-semibold text-slate-500 mb-2">عدد ساعات الخطة الدراسية للتخصص</label>
@@ -280,10 +267,11 @@
     </div>
 
     <!-- Table header (desktop only) -->
-    <div class="hidden md:grid grid-cols-[1fr_120px_170px_44px] gap-4 px-6 pt-5 pb-2 text-xs font-display font-semibold text-slate-400">
+    <div class="hidden lg:grid grid-cols-[minmax(0,1fr)_90px_150px_270px_44px] gap-3 px-6 pt-5 pb-2 text-xs font-display font-semibold text-slate-400">
       <span>المادة</span>
       <span>عدد الساعات</span>
       <span id="grade-col-label">العلامة</span>
+      <span>المادة معادة؟ / الرمز السابق</span>
       <span></span>
     </div>
 
@@ -329,31 +317,34 @@
           </div>
         </div>
 
+        <!-- Hours summary -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-1.5">إجمالي الساعات بعد هذا الفصل</p>
+            <p id="result-total-after" class="font-display font-extrabold text-2xl text-white">--</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-1.5">الساعات المقطوعة</p>
+            <p id="result-total-completed" class="font-display font-extrabold text-2xl text-white">--</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+            <p class="text-slate-300 text-xs font-display font-medium mb-1.5">الساعات المتبقية للتخرج</p>
+            <p id="result-remaining" class="font-display font-extrabold text-2xl text-accent-light">--</p>
+          </div>
+        </div>
+
         <p id="result-hours-note" class="text-slate-400 text-xs font-display mt-5 text-center"></p>
 
         <!-- Degree Progress -->
         <div id="progress-section" class="hidden mt-6 pt-6 border-t border-white/10">
-          <div class="grid grid-cols-2 gap-4 mb-5">
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-              <p class="text-slate-300 text-xs font-display font-medium mb-1.5">إجمالي الساعات المقطوعة</p>
-              <p id="result-total-completed" class="font-display font-extrabold text-2xl text-white">--</p>
-            </div>
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-              <p class="text-slate-300 text-xs font-display font-medium mb-1.5">الساعات المتبقية للتخرج</p>
-              <p id="result-remaining" class="font-display font-extrabold text-2xl text-accent-light">--</p>
-            </div>
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-slate-300 text-xs font-display font-medium">نسبة الإنجاز من الخطة الدراسية</p>
+            <p id="progress-percent-label" class="text-white text-xs font-display font-bold">--%</p>
           </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-slate-300 text-xs font-display font-medium">نسبة الإنجاز من الخطة الدراسية</p>
-              <p id="progress-percent-label" class="text-white text-xs font-display font-bold">--%</p>
-            </div>
-            <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
-              <div id="progress-bar-fill" class="h-full bg-gradient-to-l from-accent to-accent-light rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
-            </div>
-            <p id="progress-hours-note" class="text-slate-400 text-xs font-display mt-2 text-center"></p>
+          <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="progress-bar-fill" class="h-full bg-gradient-to-l from-accent to-accent-light rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
           </div>
+          <p id="progress-hours-note" class="text-slate-400 text-xs font-display mt-2 text-center"></p>
         </div>
       </div>
     </div>
@@ -460,11 +451,18 @@
     ).join('');
   }
 
+  function prevOptionsHTML() {
+    return '<option value="">الرمز السابق</option>' + gradeScale.map(g =>
+      `<option value="${g.letter}">${g.letter} — ${g.points.toFixed(2)}</option>`
+    ).join('');
+  }
+
+  const fieldClass = 'w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors';
+
   function courseRowHTML(id) {
     const gradeField = gradeMode === 'letter'
       ? `<div class="select-wrap">
-           <select data-role="grade-letter" data-id="${id}"
-             class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+           <select data-role="grade-letter" data-id="${id}" class="${fieldClass}">
              ${letterOptionsHTML('A')}
            </select>
          </div>`
@@ -472,9 +470,9 @@
            class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">`;
 
     return `
-      <div class="course-row grid grid-cols-1 md:grid-cols-[1fr_120px_170px_44px] gap-3 items-center" data-course-id="${id}">
+      <div class="course-row grid grid-cols-2 lg:grid-cols-[minmax(0,1fr)_90px_150px_270px_44px] gap-3 items-center" data-course-id="${id}">
         <div data-role="name-label"
-          class="w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-500 font-display font-semibold select-none">
+          class="col-span-2 lg:col-span-1 w-full bg-surface border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-500 font-display font-semibold select-none">
           المادة</div>
 
         <input data-role="hours" type="number" min="1" max="6" step="1" value="3"
@@ -482,8 +480,23 @@
 
         <div data-role="grade-cell">${gradeField}</div>
 
+        <div class="col-span-2 lg:col-span-1 flex items-center gap-2" data-role="repeat-cell">
+          <span class="lg:hidden text-xs font-display font-semibold text-slate-400 shrink-0">المادة معادة؟</span>
+          <div class="select-wrap w-[96px] shrink-0">
+            <select data-role="repeat" aria-label="المادة معادة؟" class="${fieldClass}">
+              <option value="no" selected>لا</option>
+              <option value="yes">نعم</option>
+            </select>
+          </div>
+          <div data-role="prev-wrap" class="select-wrap hidden flex-1 min-w-0">
+            <select data-role="prev-grade" aria-label="الرمز السابق للمادة المعادة" class="${fieldClass}">
+              ${prevOptionsHTML()}
+            </select>
+          </div>
+        </div>
+
         <button data-role="remove" data-id="${id}" aria-label="حذف مادة"
-          class="w-full md:w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors mx-auto">
+          class="col-span-2 lg:col-span-1 w-full lg:w-11 h-11 flex items-center justify-center rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors mx-auto">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
       </div>
@@ -518,6 +531,18 @@
     if (btn) removeCourse(btn.dataset.id);
   });
 
+  // Show/hide the "previous grade" field when "repeated course" changes
+  coursesContainer.addEventListener('change', (e) => {
+    const sel = e.target.closest('[data-role="repeat"]');
+    if (!sel) return;
+    const row = sel.closest('[data-course-id]');
+    const wrap = row.querySelector('[data-role="prev-wrap"]');
+    const prev = row.querySelector('[data-role="prev-grade"]');
+    const isYes = sel.value === 'yes';
+    wrap.classList.toggle('hidden', !isYes);
+    if (!isYes) prev.value = '';
+  });
+
   document.getElementById('add-course').addEventListener('click', addCourse);
 
   // ---------- Grade mode toggle ----------
@@ -537,8 +562,7 @@
       const cell = row.querySelector('[data-role="grade-cell"]');
       cell.innerHTML = gradeMode === 'letter'
         ? `<div class="select-wrap">
-             <select data-role="grade-letter" data-id="${id}"
-               class="w-full appearance-none bg-surface border border-slate-200 rounded-xl px-4 py-3 pl-8 text-sm focus:border-accent focus:ring-1 focus:ring-accent outline-none transition-colors">
+             <select data-role="grade-letter" data-id="${id}" class="${fieldClass}">
                ${letterOptionsHTML('A')}
              </select>
            </div>`
@@ -549,25 +573,6 @@
 
   toggleLetterBtn.addEventListener('click', () => setGradeMode('letter'));
   togglePercentBtn.addEventListener('click', () => setGradeMode('percent'));
-
-  // ---------- Calculation Mode Tabs ----------
-  const tabSemester = document.getElementById('tab-semester');
-  const tabCumulative = document.getElementById('tab-cumulative');
-  const cumulativeInputs = document.getElementById('cumulative-inputs');
-  const resultCumulativeBox = document.getElementById('result-cumulative-box');
-  let calcMode = 'semester'; // 'semester' | 'cumulative'
-
-  function setCalcMode(mode) {
-    calcMode = mode;
-    tabSemester.classList.toggle('active', mode === 'semester');
-    tabCumulative.classList.toggle('active', mode === 'cumulative');
-    cumulativeInputs.classList.toggle('hidden', mode !== 'cumulative');
-    resultCumulativeBox.style.display = mode === 'cumulative' ? '' : 'none';
-    hideResults();
-  }
-
-  tabSemester.addEventListener('click', () => setCalcMode('semester'));
-  tabCumulative.addEventListener('click', () => setCalcMode('cumulative'));
 
   // ---------- Official UJ NEW system rating ----------
   function getRating(gpa) {
@@ -596,29 +601,45 @@
   }
 
   // ---------- Calculate ----------
+  const gradePoints = (letter) => {
+    const f = gradeScale.find(g => g.letter === letter);
+    return f ? f.points : null;
+  };
+
   document.getElementById('calculate-btn').addEventListener('click', () => {
     clearError();
 
+    // ----- Previous data (always required) -----
+    const prevGpa = parseFloat(document.getElementById('prev-gpa').value);
+    const prevHours = parseFloat(document.getElementById('prev-hours').value);
+
+    if (isNaN(prevGpa) || prevGpa < 0 || prevGpa > 4) {
+      showError('يرجى إدخال معدل تراكمي سابق صحيح بين 0.00 و4.00.');
+      return;
+    }
+    if (isNaN(prevHours) || prevHours < 0) {
+      showError('يرجى إدخال عدد ساعات سابقة صحيح.');
+      return;
+    }
+
     const rows = Array.from(document.querySelectorAll('[data-course-id]'));
-    let totalPoints = 0;
-    let totalHours = 0;
+
+    let semPoints = 0, semHours = 0;          // semester GPA: every course, with its new grade
+    let newPoints = 0, newHours = 0;          // courses taken for the first time
+    let repeatAdjust = 0, repeatedHours = 0;  // repeated courses (UJ rule)
+    let repeatedCount = 0;
+    let failedHours = 0;                      // hours whose final (effective) grade is F
     let hasValidCourse = false;
 
     for (const row of rows) {
-      const hoursInput = row.querySelector('[data-role="hours"]');
-      const hours = parseFloat(hoursInput.value);
-
+      const hours = parseFloat(row.querySelector('[data-role="hours"]').value);
       if (!hours || hours <= 0) continue;
 
       let points = null;
-
       if (gradeMode === 'letter') {
-        const select = row.querySelector('[data-role="grade-letter"]');
-        const found = gradeScale.find(g => g.letter === select.value);
-        points = found ? found.points : null;
+        points = gradePoints(row.querySelector('[data-role="grade-letter"]').value);
       } else {
-        const input = row.querySelector('[data-role="grade-percent"]');
-        const val = parseFloat(input.value);
+        const val = parseFloat(row.querySelector('[data-role="grade-percent"]').value);
         if (isNaN(val)) continue;
         if (val < 0 || val > 100) {
           showError('يرجى إدخال علامة مئوية صحيحة بين 0 و100.');
@@ -626,83 +647,100 @@
         }
         points = percentToPoints(val);
       }
-
       if (points === null) continue;
 
-      totalPoints += points * hours;
-      totalHours += hours;
+      semPoints += points * hours;
+      semHours += hours;
       hasValidCourse = true;
+
+      const isRepeated = row.querySelector('[data-role="repeat"]').value === 'yes';
+
+      if (isRepeated) {
+        const oldPoints = gradePoints(row.querySelector('[data-role="prev-grade"]').value);
+        if (oldPoints === null) {
+          const name = row.querySelector('[data-role="name-label"]').textContent.trim();
+          showError(`يرجى اختيار الرمز السابق للمادة المعادة (${name}).`);
+          return;
+        }
+        // UJ policy: the higher grade replaces the previous one in the cumulative GPA.
+        // The old attempt's hours are already inside prevHours, so hours are NOT added again;
+        // only the points difference is applied.
+        const effective = Math.max(oldPoints, points);
+        repeatAdjust += (effective - oldPoints) * hours;
+        repeatedHours += hours;
+        repeatedCount++;
+        if (effective === 0) failedHours += hours;
+      } else {
+        newPoints += points * hours;
+        newHours += hours;
+        if (points === 0) failedHours += hours;
+      }
     }
 
-    if (!hasValidCourse || totalHours === 0) {
+    if (!hasValidCourse || semHours === 0) {
       showError('يرجى إدخال مادة واحدة على الأقل مع عدد ساعات صحيح.');
       return;
     }
-
-    const semesterGPA = totalPoints / totalHours;
-
-    document.getElementById('result-semester').textContent = semesterGPA.toFixed(2);
-
-    let ratingGPA = semesterGPA;
-    let hoursNote = `بناءً على ${totalHours} ساعة معتمدة هذا الفصل.`;
-    const progressSection = document.getElementById('progress-section');
-    progressSection.classList.add('hidden');
-
-    if (calcMode === 'cumulative') {
-      const prevGpaInput = parseFloat(document.getElementById('prev-gpa').value);
-      const prevHoursInput = parseFloat(document.getElementById('prev-hours').value);
-
-      if (isNaN(prevGpaInput) || prevGpaInput < 0 || prevGpaInput > 4) {
-        showError('يرجى إدخال معدل تراكمي سابق صحيح بين 0.00 و4.00.');
-        return;
-      }
-      if (isNaN(prevHoursInput) || prevHoursInput < 0) {
-        showError('يرجى إدخال عدد ساعات سابقة صحيح.');
-        return;
-      }
-
-      const combinedPoints = (prevGpaInput * prevHoursInput) + totalPoints;
-      const combinedHours = prevHoursInput + totalHours;
-      const newCumulative = combinedPoints / combinedHours;
-
-      document.getElementById('result-cumulative').textContent = newCumulative.toFixed(2);
-      ratingGPA = newCumulative;
-      hoursNote = `إجمالي الساعات بعد هذا الفصل: ${combinedHours} ساعة معتمدة.`;
-
-      // Degree plan progress (optional field)
-      const totalPlanInput = document.getElementById('total-plan-hours').value;
-      if (totalPlanInput !== '') {
-        const totalPlanHours = parseFloat(totalPlanInput);
-
-        if (isNaN(totalPlanHours) || totalPlanHours <= 0) {
-          showError('يرجى إدخال عدد ساعات صحيح للخطة الدراسية.');
-          return;
-        }
-        if (combinedHours > totalPlanHours) {
-          showError('عدد الساعات المقطوعة أكبر من عدد ساعات الخطة الدراسية المدخل. يرجى التحقق من الأرقام.');
-          return;
-        }
-
-        const remainingHours = totalPlanHours - combinedHours;
-        const progressPercent = (combinedHours / totalPlanHours) * 100;
-
-        document.getElementById('result-total-completed').textContent = combinedHours;
-        document.getElementById('result-remaining').textContent = remainingHours;
-        document.getElementById('progress-percent-label').textContent = `${progressPercent.toFixed(1)}%`;
-        document.getElementById('progress-bar-fill').style.width = `${Math.min(progressPercent, 100).toFixed(1)}%`;
-        document.getElementById('progress-hours-note').textContent =
-          `${combinedHours} من أصل ${totalPlanHours} ساعة معتمدة في الخطة الدراسية.`;
-
-        progressSection.classList.remove('hidden');
-      }
+    if (repeatedHours > prevHours) {
+      showError('ساعات المواد المعادة أكبر من عدد الساعات السابقة المدخلة. يرجى التحقق من الأرقام.');
+      return;
     }
 
-    const rating = getRating(ratingGPA);
+    // ----- Semester GPA (shown in results card) -----
+    const semesterGPA = semPoints / semHours;
+
+    // ----- Cumulative GPA -----
+    const combinedHours = prevHours + newHours;
+    if (combinedHours === 0) {
+      showError('لا يمكن حساب المعدل التراكمي: إجمالي الساعات يساوي صفراً.');
+      return;
+    }
+    const combinedPoints = (prevGpa * prevHours) + repeatAdjust + newPoints;
+    const newCumulative = combinedPoints / combinedHours;
+    const completedHours = Math.max(combinedHours - failedHours, 0);
+
+    // ----- Optional degree plan -----
+    const progressSection = document.getElementById('progress-section');
+    const remainingEl = document.getElementById('result-remaining');
+    progressSection.classList.add('hidden');
+    remainingEl.textContent = '--';
+
+    const totalPlanInput = document.getElementById('total-plan-hours').value;
+    if (totalPlanInput !== '') {
+      const totalPlanHours = parseFloat(totalPlanInput);
+      if (isNaN(totalPlanHours) || totalPlanHours <= 0) {
+        showError('يرجى إدخال عدد ساعات صحيح للخطة الدراسية.');
+        return;
+      }
+      if (completedHours > totalPlanHours) {
+        showError('عدد الساعات المقطوعة أكبر من عدد ساعات الخطة الدراسية المدخل. يرجى التحقق من الأرقام.');
+        return;
+      }
+      const progressPercent = (completedHours / totalPlanHours) * 100;
+      remainingEl.textContent = totalPlanHours - completedHours;
+      document.getElementById('progress-percent-label').textContent = `${progressPercent.toFixed(1)}%`;
+      document.getElementById('progress-bar-fill').style.width = `${Math.min(progressPercent, 100).toFixed(1)}%`;
+      document.getElementById('progress-hours-note').textContent =
+        `${completedHours} من أصل ${totalPlanHours} ساعة معتمدة في الخطة الدراسية.`;
+      progressSection.classList.remove('hidden');
+    }
+
+    // ----- Render -----
+    document.getElementById('result-semester').textContent = semesterGPA.toFixed(2);
+    document.getElementById('result-cumulative').textContent = newCumulative.toFixed(2);
+    document.getElementById('result-total-after').textContent = combinedHours;
+    document.getElementById('result-total-completed').textContent = completedHours;
+
+    const rating = getRating(newCumulative);
     const ratingEl = document.getElementById('result-rating');
     ratingEl.textContent = rating.label;
     ratingEl.className = `font-display font-bold text-sm px-4 py-1.5 rounded-full border ${rating.color}`;
 
-    document.getElementById('result-hours-note').textContent = hoursNote;
+    let note = `المعدل الفصلي محسوب على ${semHours} ساعة هذا الفصل.`;
+    if (repeatedCount > 0) {
+      note += ` تم احتساب ${repeatedCount} مادة معادة بالعلامة الأعلى دون تكرار ساعاتها.`;
+    }
+    document.getElementById('result-hours-note').textContent = note;
 
     resultsBox.classList.add('show');
     resultsBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -711,7 +749,6 @@
   // ---------- Init ----------
   addCourse();
   addCourse();
-  resultCumulativeBox.style.display = 'none';
 </script>
 
 <style>
