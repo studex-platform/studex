@@ -291,6 +291,13 @@
                     </div>
                 </div>
 
+                <!-- حقل ترتيب الظهور (المصادر الأكاديمية فقط) -->
+                <div id="group-order" class="field-group space-y-1">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">ترتيب الظهور <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                    <input type="number" id="fieldOrder" step="1" placeholder="مثال: 1" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    <p class="text-[11px] text-slate-400">الرقم الأصغر يظهر أولاً. العناصر بدون رقم تظهر في النهاية.</p>
+                </div>
+
                 <button id="publishBtn" onclick="publish()" class="w-full bg-navy-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow">نشر المحتوى</button>
             </div>
         </div>
@@ -421,6 +428,7 @@
                 hint.textContent = 'قسم "الفرص والدورات": اسم + فقرة نصية تفصيلية تُعرض كاملة داخل نافذة منبثقة عند فتح العنصر في الموقع، والرابط الخارجي اختياري ويظهر كزر داخل نفس النافذة.';
             } else if (entryMode === 'flexible') {
                 document.getElementById('flexModeGroup').classList.add('active');
+                document.getElementById('group-order').classList.add('active');
                 titleLabel.textContent = 'العنوان';
                 hint.textContent = 'قسم "المصادر الأكاديمية": اختر إن كان المحتوى رابطاً أزرق تفاعلياً (سلايدات، أسئلة سنوات سابقة، إيميل دكتور...) أو نصاً معلوماتياً. بطاقة "مصادر المواد والسلايدات وأسئلة السنوات" أصبحت بطاقة واحدة موحّدة تجمع كل هذا المحتوى.';
                 applyFlexMode();
@@ -448,6 +456,21 @@
             };
         }
 
+        function readOrderField() {
+            const raw = document.getElementById('fieldOrder').value.trim();
+            const n = parseInt(raw, 10);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function sortByOrder(items) {
+            return items.map((it, i) => ({ it, i })).sort((a, b) => {
+                const ao = Number.isFinite(a.it.order) ? a.it.order : Infinity;
+                const bo = Number.isFinite(b.it.order) ? b.it.order : Infinity;
+                if (ao === bo) return a.i - b.i;
+                return ao - bo;
+            }).map(x => x.it);
+        }
+
         function buildPayload(entryMode) {
             const title = document.getElementById('fieldTitle').value.trim();
             if (!title) { alert('الرجاء إدخال العنوان.'); return null; }
@@ -468,11 +491,11 @@
                 if (flexMode === 'drive') {
                     const desc = document.getElementById('fieldDescFD').value.trim();
                     const link = document.getElementById('fieldLinkFD').value.trim(); // Optional!
-                    return { kind: 'drive', title, desc, link };
+                    return { kind: 'drive', title, desc, link, order: readOrderField() };
                 } else {
                     const body = document.getElementById('fieldBodyFT').value.trim();
                     if (!body) { alert('الرجاء إدخال النص المعلوماتي.'); return null; }
-                    return { kind: 'text', title, body };
+                    return { kind: 'text', title, body, order: readOrderField() };
                 }
             }
             return null;
@@ -514,7 +537,7 @@
             document.getElementById('formTitle').textContent = 'إضافة محتوى جديد';
             document.getElementById('cancelEditBtn').classList.add('hidden');
             document.getElementById('publishBtn').textContent = 'نشر المحتوى';
-            ['fieldTitle','fieldParagraph','fieldYoutube','fieldDescLL','fieldLinkLL','fieldDescFD','fieldLinkFD','fieldBodyFT']
+            ['fieldTitle','fieldParagraph','fieldYoutube','fieldDescLL','fieldLinkLL','fieldDescFD','fieldLinkFD','fieldBodyFT','fieldOrder']
                 .forEach(id => document.getElementById(id).value = '');
             document.getElementById('sectionSelect').selectedIndex = 0;
             onSectionChange();
@@ -547,6 +570,7 @@
                 document.getElementById('fieldDescLL').value = item.desc || '';
                 document.getElementById('fieldLinkLL').value = item.link || '';
             } else if (meta.entryMode === 'flexible') {
+                document.getElementById('fieldOrder').value = Number.isFinite(item.order) ? item.order : '';
                 setFlexMode(item.kind === 'text' ? 'text' : 'drive');
                 if (item.kind === 'text') {
                     document.getElementById('fieldBodyFT').value = item.body || '';
@@ -633,7 +657,7 @@
                 if (currentFilter !== 'all' && meta.sectionKey !== currentFilter) return;
                 groups[meta.sectionKey] = groups[meta.sectionKey] || { label: meta.sectionLabel, subs: {} };
                 groups[meta.sectionKey].subs[meta.subTabKey] = groups[meta.sectionKey].subs[meta.subTabKey] || { label: meta.subTabLabel, cards: {} };
-                groups[meta.sectionKey].subs[meta.subTabKey].cards[cardKey] = { label: meta.cardLabel, items: all[cardKey] };
+                groups[meta.sectionKey].subs[meta.subTabKey].cards[cardKey] = { label: meta.cardLabel, items: meta.sectionKey === 'academic' ? sortByOrder(all[cardKey]) : all[cardKey] };
             });
 
             if (!Object.keys(groups).length) {
@@ -651,6 +675,7 @@
                             <div class="flex justify-between items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        ${Number.isFinite(item.order) ? `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 text-[10px] font-bold">#${item.order}</span>` : ''}
                                         <span class="font-semibold text-slate-800">${escapeHTML(item.title)}</span>
                                         ${(item.kind === 'link' || item.kind === 'drive') && !item.link
                                             ? '<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-bold">بدون رابط</span>'

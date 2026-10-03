@@ -324,6 +324,12 @@
     } catch (e) {
       console.error('[StudeX] خطأ أثناء جلب العناصر:', e);
     }
+    // ترتيب العناصر حسب حقل "ترتيب الظهور" المحدد من لوحة التحكم (بدون رقم = في النهاية)
+    items = items.map((it, i) => ({ it, i })).sort((a, b) => {
+      const ao = Number.isFinite(a.it.order) ? a.it.order : Infinity;
+      const bo = Number.isFinite(b.it.order) ? b.it.order : Infinity;
+      return ao === bo ? a.i - b.i : ao - bo;
+    }).map(x => x.it);
     list.innerHTML = items.length ? items.map(item => {
       if (item.kind === 'text') {
         return `
