@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "StudeX | منصة الطالب الشاملة",
+  "short_name": "StudeX",
+  "description": "منصة طلابية رقمية لطلاب الجامعة الأردنية: حاسبة المعدل، لوحة التخطيط، المصادر الأكاديمية والمزيد.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0F172A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
