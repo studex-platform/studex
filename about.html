@@ -63,6 +63,222 @@
   #mobile-menu { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
   #mobile-menu.open { max-height: 640px; }
 </style>
+<script>
+/**
+ * StudeX — الوضع الليلي (Dark Mode)
+ *
+ * ملف مشترك لكل الصفحات. لا يعدّل أي كود أو تصميم موجود: يضيف فقط طبقة
+ * ألوان تُفعَّل عند وجود الكلاس "dark" على <html>، ويربط أزرار التبديل
+ * التي تحمل الخاصية data-theme-toggle.
+ *
+ * مدمج داخل <head> في كل صفحة (قبل ظهور المحتوى) لتفادي وميض الوضع الفاتح.
+ *
+ * الاختيار يُحفظ في localStorage تحت المفتاح "studex-theme".
+ * الافتراضي هو الوضع الفاتح (كما هو الموقع حالياً) حتى يختار الزائر غير ذلك.
+ */
+(function () {
+  'use strict';
+
+  var KEY = 'studex-theme';
+  var root = document.documentElement;
+
+  /* ---------- قراءة / حفظ التفضيل ---------- */
+  function getSaved() {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+  function save(v) {
+    try { localStorage.setItem(KEY, v); } catch (e) { /* التخزين غير متاح */ }
+  }
+
+  /* ---------- تطبيق الوضع فوراً (قبل رسم الصفحة) ---------- */
+  if (getSaved() === 'dark') root.classList.add('dark');
+
+  /* ---------- خريطة ألوان الوضع الليلي (كلاسات Tailwind المستخدمة في الموقع) ---------- */
+  var MAP = {
+    /* خلفيات */
+    'bg-surface': 'background-color:#0B1120',
+    'bg-white': 'background-color:#111A2E',
+    'bg-slate-50': 'background-color:#162033',
+    'bg-slate-100': 'background-color:#1E293B',
+    'bg-slate-200': 'background-color:#334155',
+    'bg-white/85': 'background-color:rgba(11,17,32,0.85)',
+    'bg-blue-50': 'background-color:rgba(59,130,246,0.14)',
+    'bg-emerald-50': 'background-color:rgba(16,185,129,0.13)',
+    'bg-pink-50': 'background-color:rgba(236,72,153,0.14)',
+    'bg-rose-50': 'background-color:rgba(244,63,94,0.13)',
+    'bg-red-50': 'background-color:rgba(239,68,68,0.13)',
+    'bg-violet-50': 'background-color:rgba(139,92,246,0.14)',
+    'bg-sky-50': 'background-color:rgba(14,165,233,0.13)',
+    'bg-amber-50': 'background-color:rgba(245,158,11,0.13)',
+
+    /* hover على الخلفيات */
+    'hover:bg-slate-50': 'background-color:#1B2740',
+    'hover:bg-slate-200': 'background-color:#3B4A60',
+    'hover:bg-white': 'background-color:#1A2540',
+    'hover:bg-blue-50': 'background-color:rgba(59,130,246,0.18)',
+    'hover:bg-emerald-50': 'background-color:rgba(16,185,129,0.18)',
+    'hover:bg-emerald-50/40': 'background-color:rgba(16,185,129,0.09)',
+    'hover:bg-pink-50': 'background-color:rgba(236,72,153,0.18)',
+    'hover:bg-red-50': 'background-color:rgba(239,68,68,0.18)',
+    'hover:bg-red-100': 'background-color:rgba(239,68,68,0.24)',
+    'hover:bg-rose-100': 'background-color:rgba(244,63,94,0.24)',
+
+    /* نصوص */
+    'text-navy': 'color:#E5EBF3',
+    'hover:text-navy': 'color:#FFFFFF',
+    'text-slate-800': 'color:#E2E8F0',
+    'text-slate-700': 'color:#CBD5E1',
+    'text-slate-600': 'color:#B0BCCE',
+    'text-slate-500': 'color:#94A3B8',
+    'text-accent-dim': 'color:#60A5FA',
+    'hover:text-accent-dim': 'color:#93C5FD',
+    'text-blue-600': 'color:#93C5FD',
+    'text-blue-700': 'color:#93C5FD',
+    'text-emerald-600': 'color:#6EE7B7',
+    'text-emerald-700': 'color:#6EE7B7',
+    'text-emerald-800': 'color:#A7F3D0',
+    'text-red-700': 'color:#FCA5A5',
+    'text-rose-500': 'color:#FDA4AF',
+    'text-rose-600': 'color:#FDA4AF',
+    'text-violet-600': 'color:#C4B5FD',
+    'text-sky-600': 'color:#7DD3FC',
+    'text-sky-700': 'color:#7DD3FC',
+    'text-amber-600': 'color:#FCD34D',
+    'text-amber-700': 'color:#FCD34D',
+
+    /* حدود */
+    'border-slate-200': 'border-color:#2A3650',
+    'border-slate-100': 'border-color:#1F2A40',
+    'border-slate-200/70': 'border-color:rgba(42,54,80,0.7)',
+    'border-navy': 'border-color:#475569',
+    'border-blue-100': 'border-color:rgba(59,130,246,0.28)',
+    'border-blue-200': 'border-color:rgba(59,130,246,0.35)',
+    'border-emerald-200': 'border-color:rgba(16,185,129,0.35)',
+    'hover:border-emerald-300': 'border-color:rgba(16,185,129,0.5)',
+    'border-red-200': 'border-color:rgba(239,68,68,0.35)',
+    'border-rose-200': 'border-color:rgba(244,63,94,0.35)',
+    'border-sky-200': 'border-color:rgba(14,165,233,0.35)',
+    'border-amber-200': 'border-color:rgba(245,158,11,0.35)',
+    'hover:border-pink-300': 'border-color:rgba(236,72,153,0.5)'
+  };
+
+  function esc(s) {
+    return (window.CSS && CSS.escape) ? CSS.escape(s) : s.replace(/([^\w-])/g, '\\$1');
+  }
+
+  function selectorFor(cls) {
+    var c = '.' + esc(cls);
+    if (cls.indexOf('group-hover:') === 0) return 'html.dark .group:hover ' + c;
+    if (cls.indexOf('hover:') === 0) return 'html.dark ' + c + ':hover';
+    if (cls.indexOf('focus:') === 0) return 'html.dark ' + c + ':focus';
+    return 'html.dark ' + c;
+  }
+
+  var css = '';
+
+  /* ---------- زر التبديل (يعمل في الوضعين) ---------- */
+  css +=
+    '.sx-theme-btn{color:#64748B;background-color:#F8FAFC;cursor:pointer;border:0;padding:0;transition:background-color .2s,color .2s;}' +
+    '.sx-theme-btn:hover{color:#F59E0B;background-color:#FEF3C7;}' +
+    '.sx-theme-btn svg{display:block;}' +
+    '.sx-theme-btn .sx-icon-sun{display:none;}' +
+    'html.dark .sx-theme-btn{color:#FBBF24;background-color:#162033;}' +
+    'html.dark .sx-theme-btn:hover{color:#FDE68A;background-color:rgba(251,191,36,0.16);}' +
+    'html.dark .sx-theme-btn .sx-icon-sun{display:block;}' +
+    'html.dark .sx-theme-btn .sx-icon-moon{display:none;}';
+
+  /* ---------- أساسيات الوضع الليلي ---------- */
+  css +=
+    'html.dark{color-scheme:dark;}' +
+    'html.dark body{background:#0B1120 !important;color:#E5EBF3;}' +
+    'html.dark ::placeholder{color:#64748B !important;opacity:1;}' +
+    'html.dark ::selection{background:#3B82F6;color:#fff;}' +
+    'html.dark ::-webkit-scrollbar-thumb{background:#334155 !important;}' +
+    'html.dark .hero-glow{opacity:0.9;}';
+
+  /* ---------- كلاسات Tailwind ---------- */
+  Object.keys(MAP).forEach(function (cls) {
+    css += selectorFor(cls) + '{' + MAP[cls] + ' !important;}';
+  });
+
+  /* ---------- صفحة اللوحة الإدارية: الجسم يستخدم bg-slate-50 ---------- */
+  css += 'html.dark body.bg-slate-50{background-color:#0B1120 !important;}';
+
+  /* ---------- أزرار كحلية (bg-navy) تحتاج حدّاً خفيفاً كي لا تضيع على الخلفية الداكنة ---------- */
+  css +=
+    'html.dark a.bg-navy,html.dark button.bg-navy{box-shadow:0 0 0 1px rgba(148,163,184,0.28);}';
+
+  /* ---------- كلاسات CSS المخصصة الموجودة في الصفحات ---------- */
+  css +=
+    'html.dark .nav-link.active{color:#FFFFFF;}' +
+    'html.dark .tool-tab.active,html.dark .section-tab.active,html.dark .filter-pill.active,' +
+    'html.dark .identity-mode-btn.active,html.dark .mode-toggle.active,html.dark .main-tab-btn.active,' +
+    'html.dark .community-filter-chip.active{background:#1E293B;color:#fff;box-shadow:0 0 0 1px #3B4A66;}' +
+    'html.dark .community-filter-chip.active{border-color:#3B4A66;}' +
+    'html.dark .tool-tab:not(.active),html.dark .section-tab:not(.active),html.dark .filter-pill:not(.active),' +
+    'html.dark .identity-mode-btn:not(.active),html.dark .toggle-pill:not(.active),html.dark .main-tab-btn:not(.active){color:#94A3B8;}' +
+    'html.dark .master-card:hover,html.dark .post-card:hover,html.dark .card-lift:hover,html.dark .task-card:hover{box-shadow:0 14px 30px -12px rgba(0,0,0,0.55);}' +
+    'html.dark .select-wrap::after{border-color:#64748B;}' +
+    /* لوحة التخطيط (Canvas + Kanban) */
+    'html.dark .canvas-scroll{background-color:#0B1120;}' +
+    'html.dark .canvas-inner{background-image:radial-gradient(circle,#334155 1px,transparent 1px);}' +
+    'html.dark .priority-picker-option.selected,html.dark .color-swatch.selected{box-shadow:0 0 0 2px #E2E8F0 inset;}' +
+    /* خلفية الدوائر الإلكترونية الجانبية */
+    'html.dark .sx-trace{stroke:#3B5BA5;}' +
+    'html.dark .sx-chip{fill:#13203A;stroke:#3B5BA5;}';
+
+  var style = document.createElement('style');
+  style.id = 'studex-dark-css';
+  style.textContent = css;
+  (document.head || root).appendChild(style);
+
+  /* ---------- منطق الزر ---------- */
+  var LABEL_TO_DARK = 'تفعيل الوضع الليلي';
+  var LABEL_TO_LIGHT = 'تفعيل الوضع النهاري';
+
+  function isDark() { return root.classList.contains('dark'); }
+
+  function syncUI() {
+    var dark = isDark();
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#0B1120' : '#0F172A');
+    var btns = document.querySelectorAll('[data-theme-toggle]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btns[i].setAttribute('aria-label', dark ? LABEL_TO_LIGHT : LABEL_TO_DARK);
+      btns[i].setAttribute('title', dark ? LABEL_TO_LIGHT : LABEL_TO_DARK);
+    }
+  }
+
+  function setTheme(dark) {
+    root.classList.toggle('dark', dark);
+    save(dark ? 'dark' : 'light');
+    syncUI();
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t && t.closest && t.closest('[data-theme-toggle]')) {
+      setTheme(!isDark());
+    }
+  });
+
+  /* مزامنة بين التبويبات المفتوحة */
+  window.addEventListener('storage', function (e) {
+    if (e.key === KEY) {
+      root.classList.toggle('dark', e.newValue === 'dark');
+      syncUI();
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncUI);
+  } else {
+    syncUI();
+  }
+})();
+
+</script>
 </head>
 <body class="text-navy antialiased">
 
@@ -89,6 +305,7 @@
         <a href="https://www.linkedin.com/in/mohammad-abu-alhaija/" target="_blank" rel="noopener" aria-label="لينكد إن StudeX" class="w-10 h-10 rounded-lg bg-slate-50 hover:bg-blue-50 flex items-center justify-center transition-colors group">
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#64748B" stroke-width="1.6" class="group-hover:stroke-blue-500 transition-colors"/><path d="M8 10V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" class="group-hover:stroke-blue-500 transition-colors"/><circle cx="8" cy="7" r="1" fill="#64748B" class="group-hover:fill-blue-500 transition-colors"/><path d="M12 17V13C12 11.5 13 10.5 14.3 10.5C15.6 10.5 16.5 11.5 16.5 13V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" class="group-hover:stroke-blue-500 transition-colors"/></svg>
         </a>
+        <button type="button" data-theme-toggle aria-pressed="false" aria-label="تفعيل الوضع الليلي" title="تفعيل الوضع الليلي" class="sx-theme-btn w-10 h-10 rounded-lg flex items-center justify-center"><svg class="sx-icon-moon" width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.7 6.7 0 0 0 10.7 10.7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><svg class="sx-icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5V5M12 19V21.5M2.5 12H5M19 12H21.5M5.3 5.3L7 7M17 17L18.7 18.7M18.7 5.3L17 7M7 17L5.3 18.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </div>
 
       <!-- Desktop Nav -->
@@ -139,6 +356,7 @@
           <a href="https://www.linkedin.com/in/mohammad-abu-alhaija/" target="_blank" rel="noopener" aria-label="لينكد إن StudeX" class="w-11 h-11 rounded-lg bg-slate-50 flex items-center justify-center">
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#64748B" stroke-width="1.6"/><path d="M8 10V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="7" r="1" fill="#64748B"/><path d="M12 17V13C12 11.5 13 10.5 14.3 10.5C15.6 10.5 16.5 11.5 16.5 13V17" stroke="#64748B" stroke-width="1.6" stroke-linecap="round"/></svg>
           </a>
+          <button type="button" data-theme-toggle aria-pressed="false" aria-label="تفعيل الوضع الليلي" title="تفعيل الوضع الليلي" class="sx-theme-btn w-11 h-11 rounded-lg flex items-center justify-center"><svg class="sx-icon-moon" width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.7 6.7 0 0 0 10.7 10.7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><svg class="sx-icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5V5M12 19V21.5M2.5 12H5M19 12H21.5M5.3 5.3L7 7M17 17L18.7 18.7M18.7 5.3L17 7M7 17L5.3 18.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
         </div>
       </nav>
     </div>
