@@ -538,10 +538,16 @@
 
     let items = [];
     try {
-      items = await StudexStore.getItems(cardKey);
+      window.__studexOpenCard = cardKey;
+      items = await StudexStore.getItems(cardKey, (fresh) => { if (window.__studexOpenCard === cardKey) renderItemsList(cardKey, fresh); });
     } catch (e) {
       console.error('[StudeX] خطأ أثناء جلب العناصر:', e);
     }
+    renderItemsList(cardKey, items);
+  }
+
+  function renderItemsList(cardKey, items) {
+    const list = document.getElementById('items-modal-list');
     // ترتيب العناصر حسب حقل "ترتيب الظهور" المحدد من لوحة التحكم (بدون رقم = في النهاية)
     items = items.map((it, i) => ({ it, i })).sort((a, b) => {
       const ao = Number.isFinite(a.it.order) ? a.it.order : Infinity;
@@ -627,10 +633,11 @@
   if (typeof StudexStore !== 'undefined' && StudexStore.ready) {
     StudexStore.ready.then(() => {
       ['slides', 'doctors', 'ai_tools'].forEach(key => {
-        StudexStore.getItems(key).then(items => {
+        const setCount = items => {
           const el = document.getElementById(`count-${key}`);
           if (el) el.textContent = `${items.length} عنصر`;
-        }).catch(() => {});
+        };
+        StudexStore.getItems(key, setCount).then(setCount).catch(() => {});
       });
     });
   } else {
