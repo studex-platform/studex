@@ -120,21 +120,31 @@
     } catch (e) {}
   }
 
-  async function getItems(cardKey) {
-    // إذا كانت البيانات موجودة محلياً، ارجعها فوراً بنسبة 0 تأخير
-    if (memoryCache[cardKey] && memoryCache[cardKey].length > 0) {
-      // جلب التحديث من الخلفية بصمت
-      fetchBackground(cardKey);
-      return memoryCache[cardKey];
-    }
+  // جلب أحدث نسخة من Firestore وتحديث الكاش المحلي بها
+  async function fetchFresh(cardKey) {
+    const db = getDb();
+    const snap = await db.collection(COLLECTION_NAME).where('cardKey', '==', cardKey).get();
+    const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const sorted = sortByCreatedAt(items);
+    saveToLocal(cardKey, sorted);
+    return sorted;
+  }
 
+  // مهلة قصيرة للجلب الدفعي فقط
+  const FRESH_TIMEOUT_MS = 1500;
+
+  // يعرض الكاش فوراً (0 انتظار) ويجلب النسخة الأحدث بالخلفية؛ وإذا اختلفت
+  // عن المعروض يستدعي onFresh(items) كي تعيد الصفحة الرسم بدون إعادة تحميل.
+  async function getItems(cardKey, onFresh) {
+    const cached = memoryCache[cardKey];
+    if (cached && cached.length > 0) {
+      fetchFresh(cardKey).then((fresh) => {
+        if (onFresh && JSON.stringify(fresh) !== JSON.stringify(cached)) onFresh(fresh);
+      }).catch(() => {});
+      return cached;
+    }
     try {
-      const db = getDb();
-      const snap = await db.collection(COLLECTION_NAME).where('cardKey', '==', cardKey).get();
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      const sorted = sortByCreatedAt(items);
-      saveToLocal(cardKey, sorted);
-      return sorted;
+      return await fetchFresh(cardKey);
     } catch (e) {
       return memoryCache[cardKey] || [];
     }
@@ -160,23 +170,17 @@
     const result = {};
     const missing = [];
 
-    cardKeys.forEach((key) => {
-      if (memoryCache[key] && memoryCache[key].length > 0) {
-        result[key] = memoryCache[key];
-        // تحديث هادئ بالخلفية، بنفس فلسفة getItems()
-        fetchBackground(key);
-      } else {
-        missing.push(key);
-      }
-    });
-
-    if (!missing.length) return result;
+    // نجلب كل المفاتيح من Firestore دائماً (بدل الاكتفاء بالكاش القديم)
+    cardKeys.forEach((key) => { missing.push(key); });
 
     try {
       const db = getDb();
       // حد Firestore لعامل 'in' هو 30 قيمة، وهذا يكفي بمراحل لأي عدد
       // بطاقات حالي أو متوقع بالموقع.
-      const snap = await db.collection(COLLECTION_NAME).where('cardKey', 'in', missing).get();
+      const snap = await Promise.race([
+        db.collection(COLLECTION_NAME).where('cardKey', 'in', missing).get(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), FRESH_TIMEOUT_MS)),
+      ]);
       const grouped = {};
       missing.forEach((key) => { grouped[key] = []; });
       snap.docs.forEach((d) => {
