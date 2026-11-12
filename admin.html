@@ -39,7 +39,29 @@
         .main-tab-btn { color: #64748b; }
         .main-tab-btn.active { background: #0f172a; color: #fff; }
         .community-filter-chip.active { background: #0f172a; color: #fff; border-color: #0f172a; }
-    
+
+        /* ---- أخبار StudeX (معاينة الدائرة + أزرار الأيقونات والألوان) ---- */
+        .nw-ring { position: relative; width: 64px; height: 64px; border-radius: 9999px; padding: 3px; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--c1), var(--c2)); }
+        .nw-ring.lg { width: 84px; height: 84px; }
+        .nw-ring-in { display: block; width: 100%; height: 100%; border-radius: inherit; background: #fff; padding: 3px; }
+        .nw-ring-face { width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--c1), var(--c2)); color: #fff; }
+        .nw-ring-face svg { width: 44%; height: 44%; }
+        .nw-ring.off { filter: grayscale(1); opacity: .55; }
+        html.dark .nw-ring-in { background: #111A2E; }
+        .nw-icon-opt { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid #e2e8f0; color: #475569; transition: all .15s ease; }
+        .nw-icon-opt:hover { border-color: #2563eb; color: #2563eb; }
+        .nw-icon-opt.active { background: #0f172a; border-color: #0f172a; color: #fff; }
+        .nw-color-opt { width: 34px; height: 34px; border-radius: 9999px; background: linear-gradient(135deg, var(--c1), var(--c2));
+            box-shadow: 0 0 0 2px transparent; transition: box-shadow .15s ease, transform .15s ease; }
+        .nw-color-opt:hover { transform: scale(1.08); }
+        .nw-color-opt.active { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0f172a; }
+        html.dark .nw-icon-opt { border-color: #2A3650; color: #B0BCCE; }
+        html.dark .nw-icon-opt.active { background: #1E293B; border-color: #60A5FA; color: #fff; }
+        html.dark .nw-color-opt.active { box-shadow: 0 0 0 2px #0B1120, 0 0 0 4px #E2E8F0; }
+
   /* ---- Navbar (shared across all pages) ---- */
   .nav-link { position: relative; }
   .nav-link::after {
@@ -277,48 +299,41 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <script>
-        (function () {
-            var ADMIN_PASSWORD = "studex2026"; // يمكن تغييرها لاحقاً
-            var SESSION_KEY = "studex_admin_authed";
-
-            function isAuthed() {
-                return sessionStorage.getItem(SESSION_KEY) === "true";
-            }
-
-            function requestAccess() {
-                var attempts = 0;
-                while (!isAuthed() && attempts < 3) {
-                    var input = window.prompt("🔒 لوحة تحكم StudeX محمية\nيرجى إدخال كلمة المرور للمتابعة:");
-                    if (input === null) {
-                        // المستخدم ضغط إلغاء -> إعادة توجيه لصفحة الموقع الرئيسية
-                        window.location.replace("index.html");
-                        return;
-                    }
-                    if (input === ADMIN_PASSWORD) {
-                        sessionStorage.setItem(SESSION_KEY, "true");
-                        return;
-                    }
-                    attempts++;
-                    if (attempts < 3) {
-                        window.alert("❌ كلمة المرور غير صحيحة. حاول مرة أخرى.");
-                    }
-                }
-                if (!isAuthed()) {
-                    window.alert("❌ فشلت المحاولات. سيتم إعادة توجيهك للصفحة الرئيسية.");
-                    window.location.replace("index.html");
-                }
-            }
-
-            if (!isAuthed()) {
-                document.documentElement.style.visibility = "hidden";
-                requestAccess();
-                if (isAuthed()) {
-                    document.documentElement.style.visibility = "visible";
-                }
-            }
-        })();
-    </script>
+    <!-- ============ ADMIN LOGIN (Firebase Authentication) ============
+         تغطي الصفحة كاملة لحد ما يسجّل الأدمن دخوله. المنطق في آخر الصفحة،
+         وقائمة إيميلات الأدمن في studex-auth.js. -->
+    <style>
+        html.sx-locked, html.sx-locked body { overflow: hidden; }
+        #sxLogin[hidden] { display: none; }
+    </style>
+    <script>document.documentElement.classList.add('sx-locked');</script>
+    <div id="sxLogin" class="fixed inset-0 z-[9999] bg-slate-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="w-full max-w-sm bg-white border border-slate-200 rounded-2xl shadow-sm p-7">
+            <div class="text-center mb-6">
+                <span class="font-display font-extrabold text-3xl tracking-tight"><span class="text-navy">Stude</span><span class="text-red-600">X</span></span>
+                <h1 class="font-display font-bold text-lg text-slate-800 mt-3">تسجيل دخول لوحة التحكم</h1>
+                <p class="text-xs text-slate-500 mt-1">للمسؤولين فقط</p>
+            </div>
+            <p id="sxLoginChecking" class="text-sm text-slate-500 text-center py-6">جارِ التحقق...</p>
+            <form id="sxLoginForm" class="space-y-4 hidden" novalidate>
+                <div>
+                    <label for="sxLoginEmail" class="block text-xs font-medium text-slate-600 mb-1">الإيميل</label>
+                    <input type="email" id="sxLoginEmail" dir="ltr" autocomplete="username" required class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label for="sxLoginPassword" class="block text-xs font-medium text-slate-600 mb-1">كلمة السر</label>
+                    <input type="password" id="sxLoginPassword" dir="ltr" autocomplete="current-password" required class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <p id="sxLoginError" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2.5 leading-relaxed"></p>
+                <p id="sxLoginInfo" class="hidden text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 leading-relaxed"></p>
+                <button type="submit" id="sxLoginBtn" class="w-full bg-navy-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow">دخول</button>
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <button type="button" id="sxForgotBtn" class="text-accent font-semibold hover:underline">نسيت كلمة السر؟</button>
+                    <a href="index.html" class="text-slate-500 hover:text-slate-800">الرجوع للموقع</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
 <!-- ============ NAVBAR ============ -->
 <header class="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-200/70">
@@ -402,8 +417,8 @@
 </header>
 
     <!-- ============ MAIN TABS ============ -->
-    <div class="max-w-7xl mx-auto px-4 pt-6 w-full">
-        <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex gap-1.5 shadow-sm w-fit">
+    <div class="max-w-7xl mx-auto px-4 pt-6 w-full flex flex-wrap items-center justify-between gap-3">
+        <div class="bg-white border border-slate-200 rounded-2xl p-1.5 flex flex-wrap gap-1.5 shadow-sm w-fit">
             <button id="tabBtnContent" onclick="switchMainTab('content')" class="main-tab-btn active px-4 py-2 rounded-xl text-sm font-bold transition-colors">
                 إدارة المحتوى
             </button>
@@ -411,6 +426,13 @@
                 إدارة مجتمع StudeX
                 <span id="pendingBadge" class="hidden bg-rose-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 items-center justify-center">0</span>
             </button>
+            <button id="tabBtnNews" onclick="switchMainTab('news')" class="main-tab-btn px-4 py-2 rounded-xl text-sm font-bold transition-colors">
+                أخبار StudeX
+            </button>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+            <span id="sxAdminEmail" class="text-slate-500" dir="ltr"></span>
+            <button type="button" id="sxLogoutBtn" class="px-3 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50">تسجيل الخروج</button>
         </div>
     </div>
 
@@ -575,12 +597,195 @@
 
     </main>
 
+    <!-- ============ STUDEX NEWS PANEL (أخبار الصفحة الرئيسية) ============ -->
+    <main id="panelNews" class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Form -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 h-fit lg:sticky lg:top-24">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h2 id="newsFormTitle" class="font-bold text-lg text-navy-900">إضافة خبر جديد</h2>
+                <button id="newsCancelEditBtn" onclick="resetNewsForm()" class="hidden text-xs text-rose-500 font-semibold">إلغاء التعديل</button>
+            </div>
+
+            <!-- Live preview -->
+            <div class="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                <span id="newsPreviewRing" class="nw-ring lg"><span class="nw-ring-in"><span class="nw-ring-face" id="newsPreviewIcon"></span></span></span>
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold text-slate-400 mb-1">معاينة</p>
+                    <p id="newsPreviewLabel" class="text-sm font-bold text-slate-800 truncate">الاسم تحت الدائرة</p>
+                    <p id="newsPreviewTitle" class="text-xs text-slate-500 truncate">عنوان الخبر</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">عنوان الخبر <span class="text-rose-500">*</span></label>
+                <input type="text" id="newsTitle" oninput="updateNewsPreview()" placeholder="مثال: الجامعة الأردنية تعلن موعد التسجيل للفصل الثاني" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">الاسم تحت الدائرة</label>
+                    <input type="text" id="newsLabel" maxlength="22" oninput="updateNewsPreview()" placeholder="مثال: التسجيل" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">التصنيف</label>
+                    <input type="text" id="newsCategory" list="newsCategoryList" placeholder="أخبار الجامعة" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                    <datalist id="newsCategoryList">
+                        <option value="أخبار الجامعة"></option>
+                        <option value="إعلان"></option>
+                        <option value="تسجيل"></option>
+                        <option value="امتحانات"></option>
+                        <option value="فعاليات"></option>
+                        <option value="منح"></option>
+                        <option value="عاجل"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">التاريخ <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                <input type="text" id="newsDate" placeholder="مثال: 15 تشرين الثاني 2026" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">تفاصيل الخبر <span class="text-rose-500">*</span></label>
+                <textarea id="newsBody" rows="6" placeholder="اكتب تفاصيل الخبر... كل سطر جديد بيصير فقرة مستقلة." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">رابط <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                    <input type="text" id="newsLink" dir="ltr" placeholder="https://ju.edu.jo/..." class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">اسم الزر</label>
+                    <input type="text" id="newsLinkText" placeholder="المصدر" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1.5">الأيقونة</label>
+                <div id="newsIconPicker" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1.5">اللون</label>
+                <div id="newsColorPicker" class="flex flex-wrap gap-3 px-1"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 items-end">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">ترتيب الظهور <span class="text-slate-400 font-normal">(اختياري)</span></label>
+                    <input type="number" id="newsOrder" step="1" placeholder="مثال: 1" class="w-full border border-slate-200 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <label class="flex items-center gap-2 text-sm text-slate-600 pb-2.5 cursor-pointer">
+                    <input type="checkbox" id="newsActive" checked class="w-4 h-4 accent-blue-600">
+                    ظاهر على الموقع
+                </label>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">بدون رقم ترتيب: الخبر الأحدث يظهر أولاً. أخبارك بتظهر قبل بطاقات مزايا الموقع الثابتة (الخريطة، حاسبة المعدل...).</p>
+
+            <button id="newsPublishBtn" onclick="publishNews()" class="w-full bg-navy-900 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow">نشر الخبر</button>
+        </div>
+
+        <!-- List -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between border-b pb-3 mb-4">
+                    <h2 class="font-bold text-lg text-navy-900">الأخبار المنشورة</h2>
+                    <span id="newsCount" class="text-xs font-bold text-slate-400">0</span>
+                </div>
+                <div id="newsList" class="space-y-3"></div>
+            </div>
+        </div>
+    </main>
+
     <!-- Firebase Firestore (نسخة compat) — يجب أن تُحمَّل قبل studex-store.js.
          تأكد أن firebase-config.js و studex-store.js مرفوعان بجانب admin.html. -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="studex-store.js"></script>
+    <script src="studex-auth.js"></script>
+    <script>
+        /* ================= ADMIN LOGIN ================= */
+        (function () {
+            const overlay = document.getElementById('sxLogin');
+            const checking = document.getElementById('sxLoginChecking');
+            const form = document.getElementById('sxLoginForm');
+            const emailEl = document.getElementById('sxLoginEmail');
+            const passEl = document.getElementById('sxLoginPassword');
+            const errEl = document.getElementById('sxLoginError');
+            const infoEl = document.getElementById('sxLoginInfo');
+            const btn = document.getElementById('sxLoginBtn');
+
+            const MESSAGES = {
+                'auth/invalid-credential': 'الإيميل أو كلمة السر غير صحيحة.',
+                'auth/wrong-password': 'الإيميل أو كلمة السر غير صحيحة.',
+                'auth/user-not-found': 'الإيميل أو كلمة السر غير صحيحة.',
+                'auth/invalid-email': 'صيغة الإيميل غير صحيحة.',
+                'auth/too-many-requests': 'محاولات كثيرة. استنى شوي وجرّب مرة ثانية.',
+                'auth/network-request-failed': 'ما في اتصال إنترنت.',
+                'auth/user-disabled': 'هذا الحساب موقوف.',
+            };
+            function showError(msg) { infoEl.classList.add('hidden'); errEl.textContent = msg; errEl.classList.remove('hidden'); }
+            function showInfo(msg) { errEl.classList.add('hidden'); infoEl.textContent = msg; infoEl.classList.remove('hidden'); }
+
+            function lock() {
+                document.documentElement.classList.add('sx-locked');
+                overlay.hidden = false;
+                checking.classList.add('hidden');
+                form.classList.remove('hidden');
+            }
+            function unlock(user) {
+                overlay.hidden = true;
+                document.documentElement.classList.remove('sx-locked');
+                document.getElementById('sxAdminEmail').textContent = user.email || '';
+                passEl.value = '';
+            }
+
+            StudexAuth.onChange((user, isAdmin) => {
+                if (isAdmin) { unlock(user); return; }
+                lock();
+                if (user) {
+                    showError('هذا الحساب ليس له صلاحية الدخول للوحة التحكم.');
+                    StudexAuth.signOut();
+                }
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = emailEl.value.trim();
+                const password = passEl.value;
+                if (!email || !password) { showError('اكتب الإيميل وكلمة السر.'); return; }
+                btn.disabled = true; btn.textContent = 'جارِ الدخول...';
+                errEl.classList.add('hidden'); infoEl.classList.add('hidden');
+                try {
+                    await StudexAuth.signIn(email, password);
+                } catch (err) {
+                    showError(MESSAGES[err && err.code] || 'تعذر تسجيل الدخول، حاول مرة ثانية.');
+                } finally {
+                    btn.disabled = false; btn.textContent = 'دخول';
+                }
+            });
+
+            document.getElementById('sxForgotBtn').addEventListener('click', async () => {
+                const email = emailEl.value.trim();
+                if (!email) { showError('اكتب إيميلك فوق أول، وبعدين كبّس "نسيت كلمة السر؟".'); return; }
+                try {
+                    await StudexAuth.resetPassword(email);
+                    showInfo('إذا الإيميل مسجّل، رح يوصلك رابط لتغيير كلمة السر. شيّك على البريد (وكمان Spam).');
+                } catch (err) {
+                    showError(MESSAGES[err && err.code] || 'تعذر إرسال رابط تغيير كلمة السر.');
+                }
+            });
+
+            document.getElementById('sxLogoutBtn').addEventListener('click', () => {
+                if (confirm('بدك تسجّل خروج من لوحة التحكم؟')) StudexAuth.signOut();
+            });
+        })();
+    </script>
     <script>
         const SECTIONS = StudexStore.SECTIONS;
         let currentFilter = 'all';
@@ -949,7 +1154,10 @@
             document.getElementById('tabBtnCommunity').classList.toggle('active', tab === 'community');
             document.getElementById('panelContent').classList.toggle('hidden', tab !== 'content');
             document.getElementById('panelCommunity').classList.toggle('hidden', tab !== 'community');
+            document.getElementById('tabBtnNews').classList.toggle('active', tab === 'news');
+            document.getElementById('panelNews').classList.toggle('hidden', tab !== 'news');
             if (tab === 'community') renderCommunityPanel();
+            if (tab === 'news') renderNewsAdmin();
         }
 
         /* =====================================================================
@@ -1174,6 +1382,212 @@
                 renderCommunityPanel();
             }
         });
+    </script>
+
+    <script>
+        /* =====================================================================
+           أخبار StudeX — تظهر في شريط الأخبار أعلى الصفحة الرئيسية (index.html).
+           تُحفظ عبر StudexStore في نفس مجموعة Firestore (studex_items) تحت
+           cardKey = "site_news"، فلا تحتاج أي تعديل على Firestore Rules.
+           قائمتا الأيقونات والألوان هنا يجب أن تطابقا الموجودتين في index.html.
+        ===================================================================== */
+        const NEWS_CARD = 'site_news';
+        const NEWS_ICONS = {
+            university: { name: 'الجامعة', d: '<path d="M3 9.5L12 4L21 9.5"/><path d="M5 10V18M9.5 10V18M14.5 10V18M19 10V18"/><path d="M3.5 20H20.5"/>' },
+            megaphone:  { name: 'إعلان', d: '<path d="M4 10V14C4 14.55 4.45 15 5 15H7L13 19V5L7 9H5C4.45 9 4 9.45 4 10Z"/><path d="M16.5 9C17.4 9.8 18 10.85 18 12C18 13.15 17.4 14.2 16.5 15"/>' },
+            calendar:   { name: 'موعد', d: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5H20M8.5 3V6.5M15.5 3V6.5"/><path d="M8 13.5H10M14 13.5H16M8 16.5H10"/>' },
+            trophy:     { name: 'إنجاز', d: '<path d="M8 4H16V9C16 11.2 14.2 13 12 13C9.8 13 8 11.2 8 9V4Z"/><path d="M8 6H5V7.5C5 9.2 6.3 10.5 8 10.5M16 6H19V7.5C19 9.2 17.7 10.5 16 10.5"/><path d="M12 13V16.5M8.5 20H15.5"/>' },
+            info:       { name: 'معلومة', d: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11V16.5M12 7.8V8"/>' },
+            book:       { name: 'دراسة', d: '<path d="M4 6.5C4 5.67 4.67 5 5.5 5H10.5C11.33 5 12 5.67 12 6.5V19L9 17L6 19V6.5"/><path d="M12 8H17.5C18.33 8 19 8.67 19 9.5V19L16.5 17.5L12 19"/>' },
+            briefcase:  { name: 'فرصة', d: '<rect x="4" y="8" width="16" height="11" rx="1.5"/><path d="M8 8V6.5C8 5.67 8.67 5 9.5 5H14.5C15.33 5 16 5.67 16 6.5V8"/><path d="M4 12.5H20"/>' },
+            people:     { name: 'طلاب', d: '<circle cx="9" cy="9" r="3"/><path d="M4 19C4 15.69 6.36 13 9.2 13C10.5 13 11.7 13.5 12.6 14.3"/><circle cx="17" cy="8" r="2.5"/><path d="M15 19C15 16.2 16.9 14 19.5 14C20 14 20.5 14.1 21 14.2"/>' },
+            map:        { name: 'مكان', d: '<path d="M12 21C12 21 5 14.5 5 9.5C5 5.91 8.13 3 12 3C15.87 3 19 5.91 19 9.5C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>' },
+        };
+        const NEWS_COLORS = {
+            navy: ['#0EA5E9', '#1E3A8A'], blue: ['#3B82F6', '#06B6D4'], purple: ['#6366F1', '#A855F7'],
+            green: ['#10B981', '#14B8A6'], orange: ['#F59E0B', '#EF4444'], pink: ['#EC4899', '#F43F5E'], red: ['#EF4444', '#B91C1C'],
+        };
+        let newsEditing = null;
+        let newsIcon = 'university';
+        let newsColor = 'navy';
+        let newsCache = [];
+
+        function newsSvg(key) {
+            const ic = NEWS_ICONS[key] || NEWS_ICONS.megaphone;
+            return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ic.d}</g></svg>`;
+        }
+        function newsRingStyle(colorKey) {
+            const c = NEWS_COLORS[colorKey] || NEWS_COLORS.navy;
+            return `--c1:${c[0]};--c2:${c[1]}`;
+        }
+
+        function renderNewsPickers() {
+            document.getElementById('newsIconPicker').innerHTML = Object.keys(NEWS_ICONS).map(k =>
+                `<button type="button" onclick="setNewsIcon('${k}')" title="${NEWS_ICONS[k].name}" aria-label="${NEWS_ICONS[k].name}" class="nw-icon-opt ${k === newsIcon ? 'active' : ''}">${newsSvg(k)}</button>`).join('');
+            document.getElementById('newsColorPicker').innerHTML = Object.keys(NEWS_COLORS).map(k =>
+                `<button type="button" onclick="setNewsColor('${k}')" aria-label="${k}" class="nw-color-opt ${k === newsColor ? 'active' : ''}" style="${newsRingStyle(k)}"></button>`).join('');
+        }
+        function setNewsIcon(k) { newsIcon = k; renderNewsPickers(); updateNewsPreview(); }
+        function setNewsColor(k) { newsColor = k; renderNewsPickers(); updateNewsPreview(); }
+
+        function updateNewsPreview() {
+            const title = document.getElementById('newsTitle').value.trim();
+            const label = document.getElementById('newsLabel').value.trim();
+            document.getElementById('newsPreviewRing').setAttribute('style', newsRingStyle(newsColor));
+            document.getElementById('newsPreviewIcon').innerHTML = newsSvg(newsIcon);
+            document.getElementById('newsPreviewLabel').textContent = label || (title ? title.slice(0, 18) : 'الاسم تحت الدائرة');
+            document.getElementById('newsPreviewTitle').textContent = title || 'عنوان الخبر';
+        }
+
+        function readNewsForm() {
+            const title = document.getElementById('newsTitle').value.trim();
+            const body = document.getElementById('newsBody').value.trim();
+            if (!title) { alert('الرجاء إدخال عنوان الخبر.'); return null; }
+            if (!body) { alert('الرجاء إدخال تفاصيل الخبر.'); return null; }
+            const orderRaw = parseInt(document.getElementById('newsOrder').value.trim(), 10);
+            return {
+                kind: 'news',
+                title,
+                body,
+                label: document.getElementById('newsLabel').value.trim(),
+                category: document.getElementById('newsCategory').value.trim() || 'أخبار الجامعة',
+                date: document.getElementById('newsDate').value.trim(),
+                link: document.getElementById('newsLink').value.trim(),
+                linkText: document.getElementById('newsLinkText').value.trim(),
+                icon: newsIcon,
+                color: newsColor,
+                order: Number.isFinite(orderRaw) ? orderRaw : null,
+                active: document.getElementById('newsActive').checked,
+            };
+        }
+
+        async function publishNews() {
+            const payload = readNewsForm();
+            if (!payload) return;
+            const btn = document.getElementById('newsPublishBtn');
+            btn.disabled = true;
+            btn.textContent = 'جارِ النشر...';
+            try {
+                if (newsEditing) await StudexStore.updateItem(NEWS_CARD, newsEditing, payload);
+                else await StudexStore.addItem(NEWS_CARD, payload);
+                alert(newsEditing ? 'تم حفظ التعديلات.' : 'تم نشر الخبر! بيظهر بالصفحة الرئيسية مباشرة.');
+                resetNewsForm();
+                await renderNewsAdmin(true);
+            } catch (e) {
+                console.error('فشل نشر الخبر', e);
+                alert('تعذر نشر الخبر. تحقق من اتصال الإنترنت أو Firestore Security Rules، ثم حاول مرة أخرى.');
+                btn.textContent = newsEditing ? 'حفظ التعديلات' : 'نشر الخبر';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function resetNewsForm() {
+            newsEditing = null;
+            ['newsTitle', 'newsLabel', 'newsCategory', 'newsDate', 'newsBody', 'newsLink', 'newsLinkText', 'newsOrder']
+                .forEach(id => document.getElementById(id).value = '');
+            document.getElementById('newsActive').checked = true;
+            document.getElementById('newsFormTitle').textContent = 'إضافة خبر جديد';
+            document.getElementById('newsCancelEditBtn').classList.add('hidden');
+            document.getElementById('newsPublishBtn').textContent = 'نشر الخبر';
+            newsIcon = 'university';
+            newsColor = 'navy';
+            renderNewsPickers();
+            updateNewsPreview();
+        }
+
+        function editNews(id) {
+            const item = newsCache.find(n => n.id === id);
+            if (!item) return;
+            newsEditing = id;
+            document.getElementById('newsTitle').value = item.title || '';
+            document.getElementById('newsLabel').value = item.label || '';
+            document.getElementById('newsCategory').value = item.category || '';
+            document.getElementById('newsDate').value = item.date || '';
+            document.getElementById('newsBody').value = item.body || '';
+            document.getElementById('newsLink').value = item.link || '';
+            document.getElementById('newsLinkText').value = item.linkText || '';
+            document.getElementById('newsOrder').value = Number.isFinite(item.order) ? item.order : '';
+            document.getElementById('newsActive').checked = item.active !== false;
+            newsIcon = NEWS_ICONS[item.icon] ? item.icon : 'megaphone';
+            newsColor = NEWS_COLORS[item.color] ? item.color : 'navy';
+            document.getElementById('newsFormTitle').textContent = 'تعديل الخبر';
+            document.getElementById('newsCancelEditBtn').classList.remove('hidden');
+            document.getElementById('newsPublishBtn').textContent = 'حفظ التعديلات';
+            renderNewsPickers();
+            updateNewsPreview();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function toggleNews(id) {
+            const item = newsCache.find(n => n.id === id);
+            if (!item) return;
+            try {
+                await StudexStore.updateItem(NEWS_CARD, id, { active: item.active === false });
+                await renderNewsAdmin(true);
+            } catch (e) {
+                console.error('تعذر تغيير حالة الخبر', e);
+                alert('تعذر تغيير حالة الخبر، حاول مرة أخرى.');
+            }
+        }
+
+        async function deleteNews(id) {
+            if (!confirm('هل تريد حذف هذا الخبر نهائياً؟')) return;
+            try {
+                await StudexStore.deleteItem(NEWS_CARD, id);
+                if (newsEditing === id) resetNewsForm();
+                await renderNewsAdmin(true);
+            } catch (e) {
+                console.error('تعذر حذف الخبر', e);
+                alert('تعذر حذف الخبر، حاول مرة أخرى.');
+            }
+        }
+
+        function paintNewsList() {
+            const list = newsCache.slice().sort((a, b) => {
+                const ao = Number.isFinite(a.order) ? a.order : Infinity;
+                const bo = Number.isFinite(b.order) ? b.order : Infinity;
+                if (ao !== bo) return ao - bo;
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            });
+            document.getElementById('newsCount').textContent = list.length;
+            const box = document.getElementById('newsList');
+            if (!list.length) {
+                box.innerHTML = `<p class="text-sm text-slate-400 text-center py-8">ما في أخبار منشورة بعد. أضف أول خبر من النموذج.</p>`;
+                return;
+            }
+            box.innerHTML = list.map(n => {
+                const off = n.active === false;
+                return `
+                    <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="nw-ring ${off ? 'off' : ''}" style="${newsRingStyle(n.color)}"><span class="nw-ring-in"><span class="nw-ring-face">${newsSvg(n.icon)}</span></span></span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                ${Number.isFinite(n.order) ? `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 text-[10px] font-bold">#${n.order}</span>` : ''}
+                                <span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold">${escapeHTML(n.category || 'أخبار')}</span>
+                                ${off ? '<span class="px-2 py-0.5 rounded-md bg-slate-200 text-slate-500 text-[10px] font-bold">مخفي</span>' : '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-bold">ظاهر</span>'}
+                                ${n.date ? `<span class="text-[11px] text-slate-400">${escapeHTML(n.date)}</span>` : ''}
+                            </div>
+                            <p class="font-semibold text-sm text-slate-800 truncate">${escapeHTML(n.title)}</p>
+                            <p class="text-xs text-slate-400 truncate">${escapeHTML(n.body || '')}</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                            <button onclick="editNews('${n.id}')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200">تعديل</button>
+                            <button onclick="toggleNews('${n.id}')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:bg-slate-200">${off ? 'إظهار' : 'إخفاء'}</button>
+                            <button onclick="deleteNews('${n.id}')" class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg text-xs font-semibold hover:bg-rose-100">حذف</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function renderNewsAdmin(fromCacheOnly) {
+            newsCache = await StudexStore.getItems(NEWS_CARD, fresh => { newsCache = fresh; paintNewsList(); });
+            paintNewsList();
+        }
+
+        renderNewsPickers();
+        updateNewsPreview();
     </script>
 
 <style>

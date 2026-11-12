@@ -651,8 +651,10 @@
      تأكد أن firebase-config.js و studex-store.js مرفوعان بجانب community.html. -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="studex-store.js"></script>
+<script src="studex-auth.js"></script>
 
 <script>
   // ============ Mobile menu ============
@@ -818,9 +820,9 @@
   /* =====================================================================
      ADMIN SESSION (front-end gate only — see note at bottom of file)
   ===================================================================== */
-  const ADMIN_PASSCODE = 'studex2026'; // موحّدة مع admin.html
-  const ADMIN_SESSION_KEY = 'studex_admin_authed'; // نفس مفتاح الجلسة المستخدم في admin.html
-  function isAdmin() { return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true'; }
+  // الأدمن = حساب مسجّل دخول عبر Firebase Authentication (من admin.html)،
+  // وإيميله ضمن القائمة في studex-auth.js. كلمة السر لم تعد مكتوبة بالكود.
+  function isAdmin() { return !!(window.StudexAuth && StudexAuth.isAdmin()); }
 
   /* =====================================================================
      STATE / STORAGE
@@ -1102,14 +1104,9 @@
   ===================================================================== */
   function openAdminPanel() {
     if (!isAdmin()) {
-      const pass = prompt('أدخل كلمة مرور المسؤول:');
-      if (pass === null) return;
-      if (pass !== ADMIN_PASSCODE) {
-        alert('كلمة المرور غير صحيحة.');
-        return;
-      }
-      sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
-      renderFeed(); // لإظهار أزرار حذف المسؤول على الفور
+      // تسجيل الدخول صار من صفحة لوحة التحكم (Firebase Authentication)
+      window.location.href = 'admin.html';
+      return;
     }
     renderAdminPanel();
     document.getElementById('admin-modal-backdrop').classList.add('show');
@@ -1356,6 +1353,8 @@
   ===================================================================== */
   loadIdentities();
   initCommunitySync();
+  // إظهار/إخفاء أزرار حذف المسؤول حسب حالة تسجيل الدخول
+  if (window.StudexAuth) StudexAuth.onChange(() => renderFeed());
 </script>
 
 <style>
