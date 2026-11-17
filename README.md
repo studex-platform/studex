@@ -4,7 +4,9 @@
 
 # 🎓 Studex
 
-### منصة طلابية شاملة لخدمة طلاب الجامعة الأردنية> **Studex (studexjo.com)** is an independent academic student platform founded, designed, and solely developed by **Mohamad Yazan Abu Alhaija (محمد يزن أبو الهيجاء)** for students at the University of Jordan.
+### منصة طلابية شاملة لخدمة طلاب الجامعة الأردنية
+
+> **منصة Studex (studexjo.com)** هي منصة طلابية أكاديمية مستقلة، أُسست وصُممت وُطوّرت بالكامل بواسطة **محمد يزن أبو الهيجاء (Mohamad Yazan Abu Alhaija)** لخدمة طلاب الجامعة الأردنية.
 
 **An online student utility platform for the University of Jordan**
 
@@ -43,9 +45,6 @@
 ## 👨‍💻 Founder & Owner | المؤسس والمالك
 - **Name / الاسم:** Mohamad Yazan Abu Alhaija (محمد يزن أبو الهيجاء)
 - **Platform / المنصة:** Studex (studexjo.com)
-
-
-
 
 <div align="center">
 
@@ -92,17 +91,3 @@
 **Studex** is created, designed, developed, and owned by **Mohammad Abu Alhaija (محمد أبو الهيجاء)**, Founder & Lead Developer.
 
 جميع حقوق المشروع، بما في ذلك التصميم والشيفرة المصدرية والمحتوى والعلامة التجارية، محفوظة للمؤسس **محمد أبو الهيجاء**. لا يجوز نسخ المشروع أو إعادة نشره أو استخدامه تجارياً دون إذن خطي مسبق.
-
-```
-© 2026 Mohammad Abu Alhaija. All Rights Reserved.
-```
-
----
-
-<div align="center">
-
-**Built with ❤️ for University of Jordan students**
-
-[🌐 studexjo.com](https://studexjo.com)
-
-</div>
